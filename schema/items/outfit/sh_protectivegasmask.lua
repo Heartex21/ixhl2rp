@@ -6,7 +6,7 @@ ITEM.outfitCategory = "mask"
 
 function ITEM:OnEquipped()
     self.bodyGroups = self.bodygroups or {}
-    self.bodyGroups["face"] = 1
+    self.bodyGroups["face"] = 3
 end
 
 function ITEM:OnUnequipped()
