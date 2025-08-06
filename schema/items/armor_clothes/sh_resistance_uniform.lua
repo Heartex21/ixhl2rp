@@ -9,11 +9,19 @@ ITEM.height = 2
 
 function ITEM:OnEquipped()
 	self.player:SetArmor(self:GetData("armor", self.maxArmor))
+     local torsoIndex = self.player:FindBodygroupByName("torso")
+    if torsoIndex >= 0 then
+        self.player:SetBodygroup(torsoIndex, 8)
+    end
 end
 
 function ITEM:OnUnequipped()
 	self:SetData("armor", math.Clamp(self.player:Armor(), 0, self.maxArmor))
 	self.player:SetArmor(0)
+    local torsoIndex = self.player:FindBodygroupByName("torso")
+    if torsoIndex >= 0 then
+        self.player:SetBodygroup(torsoIndex, 0)
+    end
 end
 
 function ITEM:OnLoadout()
