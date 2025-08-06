@@ -41,6 +41,3 @@ ITEM.replacements = {
 	{"group02", "group03"},
 	{"group03m", "group03"},
 }
-ITEM.bodyGroups = {
-	["torso"] = 8
-}
