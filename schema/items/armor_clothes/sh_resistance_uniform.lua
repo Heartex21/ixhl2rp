@@ -1,6 +1,7 @@
 ITEM.name = "Resistance Uniform"
 ITEM.description = "A resistance uniform, crafted with light plated armor with a symbol on the sleeve.It can last against basic firearms and melees long enough."
 ITEM.model = Model("models/willardnetworks/clothingitems/torso_rebel_torso_1.mdl")
+ITEM.outfitCategory = "torso"
 ITEM.category = "Armored Clothing"
 ITEM.maxArmor = 50
 ITEM.armor = 50
