@@ -3,9 +3,11 @@ ITEM.description = "A resistance gas mask,crafted from scrap metal and other pla
 ITEM.category = "Outfit"
 ITEM.model = Model("models/willardnetworks/update_items/m40_item.mdl")
 ITEM.outfitCategory = "mask"
-ITEM.bodyGroups = {
-	["face"] = 3
-}
+
+function ITEM:OnEquipped()
+    self.bodyGroups = self.bodygroups or {}
+    self.bodyGroups["face"] = 1
+end
 
 function ITEM:OnUnequipped()
     self.bodyGroups = self.bodyGroups or {}
