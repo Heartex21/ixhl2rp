@@ -12,13 +12,25 @@ ITEM.bodyGroups = {
 }
 
 function ITEM:OnEquipped()
-	self.player:SetArmor(self:GetData("armor", self.maxArmor))
+	-- Add this item's armor to the player's current armor
+	local currentArmor = self.player:Armor()
+	self.player:SetArmor(currentArmor + self.armor)
+
+	-- Store the armor value this item contributed for later removal
+	self:SetData("givenArmor", self.armor)
+
+	self.bodyGroups = {
+        ["head"] = 4
+    }
 end
 
 function ITEM:OnUnequipped()
-	self:SetData("armor", math.Clamp(self.player:Armor(), 0, self.maxArmor))
-	self.player:SetArmor(0)
-    self.bodyGroups = {
+	-- Remove only the armor this item gave
+	local givenArmor = self:GetData("givenArmor", self.armor)
+	local newArmor = math.max(self.player:Armor() - givenArmor, 0)
+	self.player:SetArmor(newArmor)
+
+	self.bodyGroups = {
         ["head"] = 0
     }
 end

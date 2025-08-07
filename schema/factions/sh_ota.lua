@@ -17,6 +17,7 @@ function FACTION:OnCharacterCreated(client, character)
     inventory:Add("zip_tie", 2)
 
     character:SetModel(self.models[1])
+    self.player:SetArmor(200)
 
     -- Use a timer to ensure the model is fully initialized before setting bodygroups
     timer.Simple(0, function()
@@ -26,6 +27,7 @@ function FACTION:OnCharacterCreated(client, character)
         end
     end)
 end
+
 
 function FACTION:GetDefaultName(client)
 	return "OTA:ECHO.TGU-" .. Schema:ZeroNumber(math.random(1, 99), 2), true
