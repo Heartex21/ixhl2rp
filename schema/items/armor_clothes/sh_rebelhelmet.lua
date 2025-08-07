@@ -1,8 +1,12 @@
 ITEM.name = "L2 Helmet"
 ITEM.description = "A resistance helmet,crafted from scrap metal and other materials. It provides decent protection against small arms fire."
 ITEM.model = Model("models/willardnetworks/clothingitems/head_helmet.mdl")
-ITEM.category = "Outfit"
-ITEM.outfitCategory = "hat"
+ITEM.outfitCategory = "head"
+ITEM.category = "Armored Clothing"
+ITEM.maxArmor = 20
+ITEM.armor = 20
+ITEM.width = 2
+ITEM.height = 2
 ITEM.bodyGroups = {
 	["head"] = 4
 }
