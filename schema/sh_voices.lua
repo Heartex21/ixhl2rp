@@ -198,10 +198,25 @@ Schema.voices.Add("Citizen", "We put up with you", "That's why we put up with yo
 Schema.voices.Add("Citizen", "Almost made sense", "That almost.. made sense.", "vo/npc/male01/vanswer09.wav")
 Schema.voices.Add("Citizen", "Something wrong with me", "Something must be wrong with me, I almost understood that.", "vo/npc/male01/vanswer10.wav")
 Schema.voices.Add("Citizen", "Used to you vorts", "I guess im getting used to you vorts.", "vo/npc/male01/vanswer11.wav")
-
-
-
-
+Schema.voices.Add("Citizen", "None of your vort philosophy", "None of your vort philosophy.", "vo/npc/male01/vanswer12.wav")
+Schema.voices.Add("Citizen", "Stop youre killing me", "Stop, you're killing me.", "vo/npc/male01/vanswer13.wav")
+Schema.voices.Add("Citizen", "Do to deserve this", "What did i do to deserve this?", "vo/npc/male01/vanswer14.wav")
+Schema.voices.Add("Citizen", "Stop looking at me like that", "Stop looking at me like that.", "vo/npc/male01/vquestion01.wav")
+Schema.voices.Add("Citizen", "Never get used to", "Some things i never get used to.", "vo/npc/male01/vquestion02.wav")
+Schema.voices.Add("Citizen", "Ended up with you", "Sometimes i wonder how i ended up with you.", "vo/npc/male01/vquestion04.wav")
+Schema.voices.Add("Citizen", "Youre alright vort", "You're alright vortie.", "vo/npc/male01/vquestion05.wav")
+Schema.voices.Add("Citizen", "You vorts arent half bad", "You vorts aren't half bad.", "vo/npc/male01/vquestion06.wav")
+Schema.voices.Add("Citizen", "You waiting for somebody", "You waiting for somebody?", "vo/npc/male01/waitingsomebody.wav")
+Schema.voices.Add("Citizen", "Watch out", "Watch out!", "vo/npc/male01/watchout.wav")
+Schema.voices.Add("Citizen", "What you are doing", "Watch what you are doing!", "vo/npc/male01/watchwhat.wav")
+Schema.voices.Add("Citizen", "We trusted you", "we trusted you!", "vo/npc/male01/wetrustedyou01.wav")
+Schema.voices.Add("Citizen", "We trusted you2", "We trusted you!", "vo/npc/male01/wetrustedyou02.wav")
+Schema.voices.Add("Citizen", "Whoops", "Whoops.", "vo/npc/male01/whoops01.wav")
+Schema.voices.Add("Citizen", "Yeah", "Yeah.", "vo/npc/male01/yeah02.wav")
+Schema.voices.Add("Citizen", "You better reload", "You better reload.", "vo/npc/male01/youdbetterreload01.wav")
+Schema.voices.Add("Citizen", "You got it", "You got it.", "vo/npc/male01/yougotit02.wav")
+Schema.voices.Add("Citizen", "Zombies", "ZOMBIES!", "vo/npc/male01/zombies01.wav")
+Schema.voices.Add("Citizen", "Zombies2", "Zombies!", "vo/npc/male01/zombies02.wav")
 
 Schema.voices.Add("TGU", "moving", "Moving.", "grunt/advancing_on_target_01.wav")
 Schema.voices.Add("TGU", "moving now", "Moving now.", "grunt/advancing_on_target_02.wav")
