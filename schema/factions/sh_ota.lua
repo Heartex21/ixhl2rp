@@ -6,6 +6,7 @@ FACTION.pay = 40
 FACTION.models = {"models/cultist/hl_a/combine_grunt/npc/combine_grunt.mdl"}
 FACTION.isDefault = false
 FACTION.isGloballyRecognized = true
+FACTION.walkSounds = {[0] = "NPC_CombineS.WalkFootstepLeft", [1] = "NPC_CombineS.WalkFootstepRight"}
 FACTION.runSounds = {[0] = "NPC_CombineS.RunFootstepLeft", [1] = "NPC_CombineS.RunFootstepRight"}
 FACTION.armor = 150
 
