@@ -806,3 +806,6 @@ Schema.voices.Add("Dispatch", "unrest structure", "Alert, community ground-prote
     Schema.voices.AddClass("Dispatch", function(client)
         return client:IsDispatch()
     end)
+    Schema.voices.AddClass("Citizen", function(client)
+    return client:IsCitizen()
+    end)
