@@ -797,7 +797,6 @@ Schema.voices.Add("Dispatch", "unidentified", "Attention, please: Unidentified p
 Schema.voices.Add("Dispatch", "unrest procedure", "Attention, community: Unrest procedure code is now in effect. INNOCULATE, SHIELD, PACIFY. Code: PRESSURE, SWORD, STERILIZE.", "npc/overwatch/cityvoice/f_unrestprocedure1_spkr.wav", true)
 Schema.voices.Add("Dispatch", "unrest structure", "Alert, community ground-protection units, local unrest structure detected. ASSEMBLE, ADMINISTER, PACIFY.", "npc/overwatch/cityvoice/f_localunrest_spkr.wav", true)
 
-
     Schema.voices.AddClass("TGU", function(client)
         return client:IsTGU()
     end)

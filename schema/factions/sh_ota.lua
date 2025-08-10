@@ -7,6 +7,7 @@ FACTION.models = {"models/cultist/hl_a/combine_grunt/npc/combine_grunt.mdl"}
 FACTION.isDefault = false
 FACTION.isGloballyRecognized = true
 FACTION.runSounds = {[0] = "NPC_CombineS.RunFootstepLeft", [1] = "NPC_CombineS.RunFootstepRight"}
+FACTION.armor = 150
 
 function FACTION:OnCharacterCreated(client, character)
     local inventory = character:GetInventory()
@@ -17,7 +18,6 @@ function FACTION:OnCharacterCreated(client, character)
     inventory:Add("zip_tie", 2)
 
     character:SetModel(self.models[1])
-    self.player:SetArmor(200)
 
     -- Use a timer to ensure the model is fully initialized before setting bodygroups
     timer.Simple(0, function()

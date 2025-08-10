@@ -233,3 +233,14 @@ end
 for k, v in pairs(ix.item.categories or {}) do
     print("Category:", k, "Description:", v.description)
 end
+
+local oldAdd = Schema.voices.Add
+function Schema.voices.Add(class, key, text, sound, global)
+    oldAdd(class, key, text, sound, global)
+
+    class = string.lower(class)
+    -- Only add to classTables if it's a tracked class
+    if Schema.voices.classTables[class:upper()] then
+        table.insert(Schema.voices.classTables[class:upper()], {key = key, text = text, sound = sound, global = global})
+    end
+end
