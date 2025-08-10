@@ -3,9 +3,24 @@ Schema.voices.Add("Citizen", "Ammo2", "Take some ammo!", "vo/npc/male01/ammo04.w
 Schema.voices.Add("Citizen", "Ammo3", "Take some ammo!", "vo/npc/male01/ammo05.wav")
 Schema.voices.Add("Citizen", "Thats you", "Thats you all over.", "vo/npc/male01/answer01.wav")
 Schema.voices.Add("Citizen", "I wouldnt hold it", "I wouldn't hold it against you.", "vo/npc/male01/answer02.wav")
-Schema.voices.Add("Citizen", "Figures.", "Figures.", "vo/npc/male01/answer03.wav")
+Schema.voices.Add("Citizen", "Figures", "Figures.", "vo/npc/male01/answer03.wav")
 Schema.voices.Add("Citizen", "Dwell", "Try not to dwell on it.", "vo/npc/male01/answer04.wav")
 Schema.voices.Add("Citizen", "Talk about this later", "Can we talk about this later?", "vo/npc/male01/answer05.wav")
+Schema.voices.Add("Citizen", "Same here", "Same here.", "vo/npc/male01/answer07.wav")
+Schema.voices.Add("Citizen", "What you mean", "Know what you mean.", "vo/npc/male01/answer08.wav")
+Schema.voices.Add("Citizen", "Talking to yourself", "You're talking to yourself again.", "vo/npc/male01/answer09.wav")
+Schema.voices.Add("Citizen", "Say that too loud", "I wouldn't say that too loud...", "vo/npc/male01/answer10.wav")
+Schema.voices.Add("Citizen", "Tombstone", "Ill put it on your tombstone.", "vo/npc/male01/answer11.wav")
+Schema.voices.Add("Citizen", "Doesnt bear", "Doesn't bear thinking about.", "vo/npc/male01/answer12.wav")
+Schema.voices.Add("Citizen", "Im with you", "Im with you.", "vo/npc/male01/answer13.wav")
+Schema.voices.Add("Citizen", "You and me both", "Hah, you and me both.", "vo/npc/male01/answer14.wav")
+Schema.voices.Add("Citizen", "One way of looking", "Thats... one way of looking at it.", "vo/npc/male01/answer15.wav")
+Schema.voices.Add("Citizen", "Original Thought", "Have you ever had an... original thought?", "vo/npc/male01/answer16.wav")
+Schema.voices.Add("Citizen", "Shut up", "Im not even going to tell you to shut up!", "vo/npc/male01/answer17.wav")
+)
+
+
+
 
 Schema.voices.Add("TGU", "moving", "Moving.", "grunt/advancing_on_target_01.wav")
 Schema.voices.Add("TGU", "moving now", "Moving now.", "grunt/advancing_on_target_02.wav")
