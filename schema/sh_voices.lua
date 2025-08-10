@@ -209,7 +209,7 @@ Schema.voices.Add("Citizen", "You vorts arent half bad", "You vorts aren't half 
 Schema.voices.Add("Citizen", "You waiting for somebody", "You waiting for somebody?", "vo/npc/male01/waitingsomebody.wav")
 Schema.voices.Add("Citizen", "Watch out", "Watch out!", "vo/npc/male01/watchout.wav")
 Schema.voices.Add("Citizen", "What you are doing", "Watch what you are doing!", "vo/npc/male01/watchwhat.wav")
-Schema.voices.Add("Citizen", "We trusted you", "we trusted you!", "vo/npc/male01/wetrustedyou01.wav")
+Schema.voices.Add("Citizen", "We trusted you", "We trusted you!", "vo/npc/male01/wetrustedyou01.wav")
 Schema.voices.Add("Citizen", "We trusted you2", "We trusted you!", "vo/npc/male01/wetrustedyou02.wav")
 Schema.voices.Add("Citizen", "Whoops", "Whoops.", "vo/npc/male01/whoops01.wav")
 Schema.voices.Add("Citizen", "Yeah", "Yeah.", "vo/npc/male01/yeah02.wav")
