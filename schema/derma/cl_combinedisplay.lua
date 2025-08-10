@@ -1,3 +1,10 @@
+surface.CreateFont("CombineDisplayLarge", {
+    font = "Combine", -- or any font you want
+    size = 24,            -- change this to your desired size
+    weight = 500,
+    antialias = true,
+})
+
 
 local PANEL = {}
 
@@ -11,17 +18,16 @@ function PANEL:Init()
 
 	self.lines = {}
 
-	self:SetMaxLines(6)
-	self:SetFont("BudgetLabel")
+	self:SetMaxLines(24)
+	self:SetFont("CombineDisplayLarge")
 
-	self:SetPos(6, 6)
-	self:SetSize(ScrW(), self.maxLines * 20)
+	self:SetPos(6, 6) -- You can change these values to set the initial position
+	self:SetSize(ScrW(), ScrH() / 2)
 	self:ParentToHUD()
 
 	ix.gui.combine = self
 end
 
--- Adds a line to the combine display. Set expireTime to 0 if it should never be removed.
 function PANEL:AddLine(text, color, expireTime, ...)
 	if (#self.lines >= self.maxLines) then
 		for k, info in ipairs(self.lines) do
@@ -39,13 +45,14 @@ function PANEL:AddLine(text, color, expireTime, ...)
 	local index = #self.lines + 1
 
 	self.lines[index] = {
-		text = "<:: " .. text,
+		text = "<:: Unit Objective Status:" .. text,
 		color = color or color_white,
-		expireTime = (expireTime != 0 and (CurTime() + (expireTime or 8)) or 0),
-		character = 1
+		expireTime = 0,
+		character = 1,
 	}
 
 	return index
+
 end
 
 function PANEL:RemoveLine(id)
@@ -56,14 +63,15 @@ end
 
 function PANEL:Think()
 	local x, _ = self:GetPos()
-	local y = 4 + ix.gui.bars:GetTall()
+	local y = 4
 
 	self:SetPos(x, y)
 end
 
 function PANEL:Paint(width, height)
 	local textHeight = draw.GetFontHeight(self.font)
-	local y = 0
+	local y = 300
+	local x = 1080
 
 	surface.SetFont(self.font)
 
@@ -76,15 +84,26 @@ function PANEL:Paint(width, height)
 		if (info.character < info.text:len()) then
 			info.character = info.character + 1
 		end
+        local displayText = info.text:sub(1, info.character)
 
-		surface.SetTextColor(info.color)
-		surface.SetTextPos(0, y)
-		surface.DrawText(info.text:sub(1, info.character))
+        -- Draw outline (black, 1px offset in 8 directions)
+        for ox = -1, 1 do
+            for oy = -1, 1 do
+                if ox ~= 0 or oy ~= 0 then
+                    surface.SetTextColor(0, 0, 0, 255)
+                    surface.SetTextPos(x + ox, y + oy)
+                    surface.DrawText(displayText)
+                end
+            end
+        end
+
+        -- Draw main text
+        surface.SetTextColor(info.color)
+        surface.SetTextPos(x, y)
+        surface.DrawText(displayText)
 
 		y = y + textHeight
 	end
-
-	surface.SetDrawColor(Color(0, 0, 0, 255))
 end
 
 vgui.Register("ixCombineDisplay", PANEL, "Panel")
