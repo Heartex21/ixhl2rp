@@ -17,7 +17,7 @@ Schema.voices.Add("Citizen", "You and me both", "Hah, you and me both.", "vo/npc
 Schema.voices.Add("Citizen", "One way of looking", "Thats... one way of looking at it.", "vo/npc/male01/answer15.wav")
 Schema.voices.Add("Citizen", "Original Thought", "Have you ever had an... original thought?", "vo/npc/male01/answer16.wav")
 Schema.voices.Add("Citizen", "Shut up", "Im not even going to tell you to shut up!", "vo/npc/male01/answer17.wav")
-)
+
 
 
 
