@@ -123,7 +123,7 @@ Schema.voices.Add("Citizen", "Not the man2", "You're not the man i thought you w
 Schema.voices.Add("Citizen", "Oh noo", "Oh no...", "vo/npc/male01/ohno.wav")
 Schema.voices.Add("Citizen", "Ok", "Okay.", "vo/npc/male01/ok01.wav")
 Schema.voices.Add("Citizen", "Ok2", "Okay!", "vo/npc/male01/ok02.wav")
-Schema.voices.Add("Citizen", "Okay im ready", "Okay, I'm ready.", "vo/npc/male01/ok02.wav")
+Schema.voices.Add("Citizen", "Okay im ready", "Okay, I'm ready.", "vo/npc/male01/okimready01.wav")
 Schema.voices.Add("Citizen", "Okay im ready2", "Okay, I'm ready.", "vo/npc/male01/okimready02.wav")
 Schema.voices.Add("Citizen", "Okay im ready3", "Okay, I'm ready.", "vo/npc/male01/okimready03.wav")
 Schema.voices.Add("Citizen", "One for me", "One for me and one... for me.", "vo/npc/male01/oneforme.wav")
