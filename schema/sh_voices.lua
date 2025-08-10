@@ -1,4 +1,11 @@
 Schema.voices.Add("Citizen", "Ammo1", "Here ammo!", "vo/npc/male01/ammo03.wav")
+Schema.voices.Add("Citizen", "Ammo2", "Take some ammo!", "vo/npc/male01/ammo04.wav")
+Schema.voices.Add("Citizen", "Ammo3", "Take some ammo!", "vo/npc/male01/ammo05.wav")
+Schema.voices.Add("Citizen", "Thats you", "Thats you all over.", "vo/npc/male01/answer01.wav")
+Schema.voices.Add("Citizen", "I wouldnt hold it", "I wouldn't hold it against you.", "vo/npc/male01/answer02.wav")
+Schema.voices.Add("Citizen", "Figures.", "Figures.", "vo/npc/male01/answer03.wav")
+Schema.voices.Add("Citizen", "Dwell", "Try not to dwell on it.", "vo/npc/male01/answer04.wav")
+Schema.voices.Add("Citizen", "Talk about this later", "Can we talk about this later?", "vo/npc/male01/answer05.wav")
 
 Schema.voices.Add("TGU", "moving", "Moving.", "grunt/advancing_on_target_01.wav")
 Schema.voices.Add("TGU", "moving now", "Moving now.", "grunt/advancing_on_target_02.wav")
