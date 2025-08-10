@@ -1,3 +1,5 @@
+Schema.voices.Add("Citizen", "Ammo1", "Here ammo!", "vo/npc/male01/ammo03.wav")
+
 Schema.voices.Add("TGU", "moving", "Moving.", "grunt/advancing_on_target_01.wav")
 Schema.voices.Add("TGU", "moving now", "Moving now.", "grunt/advancing_on_target_02.wav")
 Schema.voices.Add("TGU", "pressing", "Pressing.", "grunt/advancing_on_target_03.wav")
@@ -807,5 +809,5 @@ Schema.voices.Add("Dispatch", "unrest structure", "Alert, community ground-prote
         return client:IsDispatch()
     end)
     Schema.voices.AddClass("Citizen", function(client)
-    return client:IsCitizen()
+        return client:Team() == FACTION_CITIZEN
     end)
