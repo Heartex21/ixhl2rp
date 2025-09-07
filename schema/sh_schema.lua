@@ -51,6 +51,53 @@ ix.anim.SetModelClass("models/willardnetworks/citizens/female_07.mdl", "citizen_
 ix.anim.SetModelClass("models/cultist/hl_a/combine_grunt/npc/combine_grunt.mdl", "overwatch")
 ix.anim.SetModelClass("models/nemez/combine_soldiers/combine_soldier_elite_h.mdl", "overwatch")
 
+if SERVER then
+    util.AddNetworkString("ixZipTieOpenInventory")
+
+    hook.Add("KeyPress", "ixZiptieSearch", function(client, key)
+        if key ~= IN_RELOAD then return end
+        if not IsValid(client) or not client:Alive() then return end
+
+        local char = client:GetCharacter()
+        if not char then return end
+        local inv = char:GetInventory()
+        if not inv:HasItem("zip_tie") then return end
+
+        local trace = client:GetEyeTrace()
+        local target = trace.Entity
+
+        if not (IsValid(target) and target:IsPlayer() and target:GetCharacter()) then return end
+        if not target:IsRestricted() then
+            client:Notify("You can only search someone who is tied up!")
+            return
+        end
+
+        if client._ixSearching then return end
+        client._ixSearching = true
+
+        client:SetAction("@searching", 2)
+        client:DoStaredAction(target, function()
+            client._ixSearching = nil
+            if not (IsValid(client) and IsValid(target)) then return end
+            if client:GetPos():DistToSqr(target:GetPos()) > 10000 then
+                client:Notify("You moved too far away.")
+                return
+            end
+
+            -- Send net message to client to open inventory
+            net.Start("ixZipTieOpenInventory")
+                net.WriteEntity(target) -- target player whose inventory to open
+            net.Send(client)
+
+            client:Notify("You searched " .. target:Name() .. "'s belongings.")
+        end, 2, function()
+            client._ixSearching = nil
+            client:SetAction()
+            client:Notify("Search cancelled.")
+        end)
+    end)
+end
+
 
 function Schema:ZeroNumber(number, length)
 	local amount = math.max(0, length - string.len(number))
