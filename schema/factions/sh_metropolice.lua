@@ -15,7 +15,6 @@ function FACTION:OnCharacterCreated(client, character)
 
 	inventory:Add("pistol", 1)
 	inventory:Add("pistolammo", 2)
-	inventory:Add("cp_uniform", 1)
 	inventory:Add("handheld_radio", 1)
 	inventory:Add("zip_tie", 3)
 
