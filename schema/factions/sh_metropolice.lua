@@ -3,19 +3,7 @@ FACTION.name = "Metropolice Force"
 FACTION.description = "A metropolice unit working as Civil Protection."
 FACTION.color = Color(50, 100, 150)
 FACTION.pay = 10
-FACTION.models = {"models/wn7new/metropolice/male_07.mdl"}
-
-FACTION.bodyGroups = {
-	["Skin"] = 0,
-	["Base"] = 0,
-	["cp_Body"] = 6,
-	["cp_Head"] = 1,
-	["cp_Armor"] = 0,
-	["cp_Belt"] = 0,
-	["cp_Pants"] = 0,
-	["cp_Bag"] = 0,
-	["Satchel"] = 0
-}
+FACTION.models = {"models/ma/hla/terranovapolice.mdl"}
 
 FACTION.weapons = {"ix_stunstick"}
 FACTION.isDefault = false
