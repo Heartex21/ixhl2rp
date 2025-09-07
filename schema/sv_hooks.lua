@@ -70,7 +70,7 @@ function Schema:PostPlayerLoadout(client)
 		if (client:Team() == FACTION_OTA) then
 			client:SetMaxHealth(150)
 			client:SetHealth(150)
-			client:SetArmor(150)
+			client:SetArmor(80)
 		elseif (client:IsScanner()) then
 			if (client.ixScanner:GetClass() == "npc_clawscanner") then
 				client:SetHealth(200)
@@ -81,7 +81,7 @@ function Schema:PostPlayerLoadout(client)
 			client.ixScanner:SetMaxHealth(client:GetMaxHealth())
 			client:StripWeapons()
 		else
-			client:SetArmor(self:IsCombineRank(client:Name(), "RCT") and 50 or 100)
+			client:SetArmor(self:IsCombineRank(client:Name(), "RCT") and 30 or 50)
 		end
 
 		local factionTable = ix.faction.Get(client:Team())
