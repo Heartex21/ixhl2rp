@@ -4,3 +4,4 @@ ITEM.width = 2
 ITEM.height = 1
 ITEM.description = "A Metal piece that resembles the slide of a pistol. It looks like it could be useful for crafting."
 ITEM.category = "Crafting"
+ITEM.uniqueID = "steel_slide"
