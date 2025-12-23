@@ -151,7 +151,7 @@ do
 	function CLASS:OnChatAdd(speaker, text)
     -- Voiceline lookup
     local faction = speaker.GetFaction and speaker:GetFaction() or speaker:Team()
-    local voiceList = ix.voices and ix.voices.stored or {}
+    local voiceList = ix.Schema.voices or {}
     local foundVoice
 
     for _, v in pairs(voiceList) do
