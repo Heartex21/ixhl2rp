@@ -253,38 +253,63 @@ function Schema:PlayerMessageSend(speaker, chatType, text, anonymous, receivers,
 	if (chatType == "ic" or chatType == "w" or chatType == "y" or chatType == "dispatch") then
 		local class = self.voices.GetClass(speaker)
 
-		for k, v in ipairs(class) do
-			local info = self.voices.Get(v, rawText)
+		-- Split the raw text into tokens (allowing commas, semicolons, pipes or whitespace)
+		local tokens = {}
+		for token in string.gmatch(rawText or "", "[^,;|%s]+") do
+			tokens[#tokens + 1] = token
+		end
 
-			if (info) then
-				local volume = 80
+		local foundInfos = {}
 
-				if (chatType == "w") then
-					volume = 60
-				elseif (chatType == "y") then
-					volume = 150
+		-- Match each token separately so multiple voicelines can be triggered
+		for _, v in ipairs(class) do
+			for _, token in ipairs(tokens) do
+				local info = self.voices.Get(v, token)
+
+				if (info) then
+					foundInfos[#foundInfos + 1] = info
 				end
+			end
+		end
 
+		if (#foundInfos > 0) then
+			local volume = 80
+
+			if (chatType == "w") then
+				volume = 60
+			elseif (chatType == "y") then
+				volume = 150
+			end
+
+			local texts = {}
+			local sounds = {}
+
+			for _, info in ipairs(foundInfos) do
 				if (info.sound) then
 					if (info.global) then
 						netstream.Start(nil, "PlaySound", info.sound)
 					else
-						local sounds = {info.sound}
-
-						if (speaker:IsCombine()) then
-							speaker.bTypingBeep = nil
-							sounds[#sounds + 1] = "NPC_MetroPolice.Radio.Off"
-						end
-
-						ix.util.EmitQueuedSounds(speaker, sounds, nil, nil, volume)
+						sounds[#sounds + 1] = info.sound
 					end
 				end
 
+				texts[#texts + 1] = info.text or ""
+			end
+
+			local retText = table.concat(texts, " ")
+
+			if (#sounds > 0) then
 				if (speaker:IsCombine()) then
-					return string.format("<:: %s ::>", info.text)
-				else
-					return info.text
+					sounds[#sounds + 1] = "NPC_MetroPolice.Radio.Off"
 				end
+
+				ix.util.EmitQueuedSounds(speaker, sounds, nil, 0.1, volume)
+			end
+
+			if (speaker:IsCombine()) then
+				return string.format("<:: %s ::>", retText)
+			else
+				return retText
 			end
 		end
 

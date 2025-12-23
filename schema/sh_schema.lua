@@ -54,6 +54,9 @@ ix.anim.SetModelClass("models/nemez/combine_soldiers/combine_soldier_elite_h.mdl
 if SERVER then
     util.AddNetworkString("ixZipTieOpenInventory")
 
+	-- Ensure typing indicator net message is registered early so clients can start it during UI init
+	util.AddNetworkString("ixTypeClass")
+
     hook.Add("KeyPress", "ixZiptieSearch", function(client, key)
         if key ~= IN_RELOAD then return end
         if not IsValid(client) or not client:Alive() then return end
@@ -149,39 +152,61 @@ do
 	end
 
 	function CLASS:OnChatAdd(speaker, text)
-    -- Voiceline lookup
-    local faction = speaker.GetFaction and speaker:GetFaction() or speaker:Team()
-    local voiceList = ix.Schema.voices or {}
-    local foundVoice
+	-- Voiceline lookup (support multiple voice tokens in one message)
+	local faction = speaker.GetFaction and speaker:GetFaction() or speaker:Team()
+	-- Tokenize and match against the speaker's voice classes so multiple commands can be used
+	local tokens = {}
+	for token in string.gmatch(text or "", "[^,;|%s]+") do
+		tokens[#tokens + 1] = token
+	end
 
-    for _, v in pairs(voiceList) do
-        local matchesFaction = false
-        if v.faction and istable(v.faction) then
-            for _, fac in ipairs(v.faction) do
-                if fac == faction then
-                    matchesFaction = true
-                    break
-                end
-            end
-        elseif v.faction == faction then
-            matchesFaction = true
-        end
+	local foundVoices = {}
+	local classes = Schema.voices.GetClass(speaker)
 
-        if matchesFaction and v.command and string.lower(text) == string.lower(v.command) then
-            foundVoice = v
-            break
-        end
-    end
+	for _, className in ipairs(classes) do
+		for _, token in ipairs(tokens) do
+			local info = Schema.voices.Get(className, token)
 
-    if foundVoice and foundVoice.sound then
-        if IsValid(speaker) then
-            speaker:EmitSound(foundVoice.sound, 70, 100, 0.5)
-        end
-        text = foundVoice.text or text
-    end
+			if (info) then
+				foundVoices[#foundVoices + 1] = info
+			end
+		end
+	end
+	if (#foundVoices > 0) then
+		local sounds = {}
 
-    text = speaker.IsCombine and speaker:IsCombine() and string.format("<:: %s ::>", text) or text
-    chat.AddText(self.color, string.format(self.format, speaker:Name(), text))
+		for _, fv in ipairs(foundVoices) do
+			if fv.sound and not fv.global and IsValid(speaker) then
+				sounds[#sounds + 1] = fv.sound
+			elseif fv.sound and fv.global then
+				netstream.Start(nil, "PlaySound", fv.sound)
+			end
+		end
+
+		if (#sounds > 0 and IsValid(speaker)) then
+			if (speaker:IsCombine()) then
+				sounds[#sounds + 1] = "NPC_MetroPolice.Radio.Off"
+			end
+
+			ix.util.EmitQueuedSounds(speaker, sounds, nil, 0.1, 70)
+		end
+
+		local texts = {}
+		for _, fv in ipairs(foundVoices) do
+			texts[#texts + 1] = fv.text or ""
+		end
+
+		text = table.concat(texts, " ")
+	end
+
+	if (IsValid(speaker) and speaker:IsCombine()) then
+		text = string.format("<:: %s ::>", text)
+	end
+
+	local name = hook.Run("GetCharacterName", speaker, "radio") or (IsValid(speaker) and speaker:Name() or "Console")
+	local translated = L2("radioFormat", name, text)
+
+	chat.AddText(self.color, translated or string.format(self.format, name, text))
 end
 
 	ix.chat.Register("radio", CLASS)
