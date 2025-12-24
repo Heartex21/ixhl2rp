@@ -41,6 +41,7 @@ LANGUAGE = {
 	cTrauma = "WARNING! %s trauma detected, seek medical attention immediately.",
 	cDroppingVitals = "WARNING! Detecting dropping vital signs, administer medical attention.",
 	cMedicalVial = "Medical vial administered, vital signs increasing.",
+	cMedicalKit = "Medical kit applied, emergency treatment complete.",
 	cStaminaLost = "ATTENTION: Excessive user exertion, administering stimulant...",
 	cStaminaGained = "Stimulant administered, user stamina levels normal.",
 	cLosingContact = "Downloading lost radio contact information...",
