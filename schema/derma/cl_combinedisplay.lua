@@ -45,9 +45,9 @@ function PANEL:AddLine(text, color, expireTime, ...)
 	local index = #self.lines + 1
 
 	self.lines[index] = {
-		text = "<:: Unit Objective Status:" .. text,
+		text = "<:: Situation Index: " .. text .. " ::>",
 		color = color or color_white,
-		expireTime = 0,
+		expireTime = CurTime() + 15,
 		character = 1,
 	}
 
@@ -70,8 +70,9 @@ end
 
 function PANEL:Paint(width, height)
 	local textHeight = draw.GetFontHeight(self.font)
-	local y = 300
-	local x = 1080
+	local y = 10
+	local padding = 20
+	local maxWidth = ScrW() * 0.3 -- Max 30% of screen width
 
 	surface.SetFont(self.font)
 
@@ -85,6 +86,10 @@ function PANEL:Paint(width, height)
 			info.character = info.character + 1
 		end
         local displayText = info.text:sub(1, info.character)
+        local textWidth = surface.GetTextSize(displayText)
+        
+        -- Right-align with padding
+        local x = ScrW() - textWidth - padding
 
         -- Draw outline (black, 1px offset in 8 directions)
         for ox = -1, 1 do
