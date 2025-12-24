@@ -10,9 +10,9 @@ ITEM.functions.Apply = {
 	OnRun = function(itemTable)
 		local client = itemTable.player
 
-		client:SetAction("Using a Health Vial", 5)
+		client:SetAction("Using a Health Vial", 3)
 
-		timer.Create("HealthVialDelay_" .. client:EntIndex(), 5, 1, function()
+		timer.Create("HealthVialDelay_" .. client:EntIndex(), 3, 1, function()
 			if (IsValid(client)) then
 				client:SetHealth(math.min(client:Health() + 20, client:GetMaxHealth()))
 
