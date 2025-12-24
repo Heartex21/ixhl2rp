@@ -417,3 +417,43 @@ netstream.Hook("ViewObjectivesUpdate", function(client, text)
 		Schema:AddCombineDisplayMessage("@cViewObjectivesFiller", nil, client, date:spanseconds())
 	end
 end)
+
+hook.Add("PostEntityFireBullets", "MetropoliceOutOfAmmo", function(ent, data)
+	if (IsValid(ent) and ent:IsPlayer() and ent:Team() == FACTION_MPF) then
+		local weapon = ent:GetActiveWeapon()
+		if (IsValid(weapon)) then
+			-- Check ammo after firing
+			timer.Simple(0.05, function()
+				if (IsValid(ent) and IsValid(weapon)) then
+					-- Check current clip ammo and reserve ammo
+					local clipAmmo = weapon:Clip1()
+					local reserveAmmo = 0
+					
+					-- Try to get reserve ammo (GetPrimaryAmmoType returns index, need string name)
+					-- Safe approach: check if they just fired their last bullet
+					if (clipAmmo == 0 and weapon:GetMaxClip1() > 0) then
+						-- Fired last bullet in clip, check reserve
+						reserveAmmo = ent:GetAmmoCount(weapon:GetClass()) or 0
+						
+						-- If no reserve either, they're out
+						if (reserveAmmo <= 0) then
+							if (!ent.outOfAmmoTriggered) then
+								-- Send chat message as if the player said it
+								ix.chat.Send(ent, "IC", "Back me up im out!")
+								ent:EmitSound("npc/metropolice/vo/backmeupimout.wav")
+								ent.outOfAmmoTriggered = true
+								
+								-- Reset flag when they pick up ammo
+								timer.Simple(1, function()
+									if (IsValid(ent)) then
+										ent.outOfAmmoTriggered = false
+									end
+								end)
+							end
+						end
+					end
+				end
+			end)
+		end
+	end
+end)
