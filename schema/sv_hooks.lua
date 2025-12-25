@@ -90,6 +90,33 @@ function Schema:PostPlayerLoadout(client)
 			factionTable:OnNameChanged(client, "", client:GetCharacter():GetName())
 		end
 	end
+
+	-- Start hunger/thirst decay timer (each lasts 60 minutes = 3600 seconds)
+	local uniqueID = "ixNutrition" .. client:SteamID()
+	timer.Create(uniqueID, 0.25, 0, function()
+		if (!IsValid(client)) then
+			timer.Remove(uniqueID)
+			return
+		end
+
+		local character = client:GetCharacter()
+		if (!character) then
+			return
+		end
+
+		-- Decay rates: 100 / 3600 seconds = 0.027778 per second, 0.0069445 per 0.25s tick
+		local hungerDecay = 0.0069445
+		local thirstDecay = 0.0069445
+
+		local currentHunger = client:GetLocalVar("hunger", 100)
+		local currentThirst = client:GetLocalVar("thirst", 100)
+
+		local newHunger = math.Clamp(currentHunger - hungerDecay, 0, 100)
+		local newThirst = math.Clamp(currentThirst - thirstDecay, 0, 100)
+
+		client:SetLocalVar("hunger", newHunger)
+		client:SetLocalVar("thirst", newThirst)
+	end)
 end
 
 function Schema:PrePlayerLoadedCharacter(client, character, oldCharacter)
@@ -106,6 +133,14 @@ function Schema:PlayerLoadedCharacter(client, character, oldCharacter)
 	elseif (client:IsCombine()) then
 		client:AddCombineDisplayMessage("@cCombineLoaded")
 	end
+
+	-- Initialize hunger/thirst from saved data
+	timer.Simple(0.25, function()
+		if (IsValid(client)) then
+			client:SetLocalVar("hunger", character:GetData("hunger", 100))
+			client:SetLocalVar("thirst", character:GetData("thirst", 100))
+		end
+	end)
 end
 
 function Schema:CharacterVarChanged(character, key, oldValue, value)
@@ -417,6 +452,16 @@ netstream.Hook("ViewObjectivesUpdate", function(client, text)
 		Schema:AddCombineDisplayMessage("@cViewObjectivesFiller", nil, client, date:spanseconds())
 	end
 end)
+
+-- Save hunger/thirst on character save
+function Schema:CharacterPreSave(character)
+	local client = character:GetPlayer()
+
+	if (IsValid(client)) then
+		character:SetData("hunger", client:GetLocalVar("hunger", 100))
+		character:SetData("thirst", client:GetLocalVar("thirst", 100))
+	end
+end
 
 hook.Add("PostEntityFireBullets", "MetropoliceOutOfAmmo", function(ent, data)
 	if (IsValid(ent) and ent:IsPlayer() and ent:Team() == FACTION_MPF) then

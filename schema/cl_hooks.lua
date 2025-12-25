@@ -273,3 +273,31 @@ netstream.Hook("ViewObjectives", function(data)
 	Schema:AddCombineDisplayMessage("@cViewObjectives")
 	vgui.Create("ixViewObjectives"):Populate(data)
 end)
+
+-- Custom left-side panel toggle
+concommand.Add("ix_toggleleftpanel", function()
+	if (IsValid(ix.gui.leftPanel)) then
+		ix.gui.leftPanel:Remove()
+		ix.gui.leftPanel = nil
+	else
+		local panel = vgui.Create("DPanel")
+		panel:SetSize(300, ScrH() * 0.5)
+		panel:SetPos(20, ScrH() * 0.25)
+		
+		panel.alpha = 0
+		panel.targetAlpha = 180
+		panel.fadeSpeed = 1200 -- alpha per second
+		
+		function panel:Paint(w, h)
+			draw.RoundedBox(8, 0, 0, w, h, Color(0, 0, 0, self.alpha))
+		end
+		
+		function panel:Think()
+			if (self.alpha < self.targetAlpha) then
+				self.alpha = math.min(self.alpha + self.fadeSpeed * FrameTime(), self.targetAlpha)
+			end
+		end
+		
+		ix.gui.leftPanel = panel
+	end
+end)
