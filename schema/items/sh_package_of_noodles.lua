@@ -1,5 +1,5 @@
 
-ITEM.name = "Chinese Takeout"
+ITEM.name = "Package of Noodles"
 ITEM.model = Model("models/props_junk/garbage_takeoutcarton001a.mdl")
 ITEM.width = 1
 ITEM.height = 1
@@ -11,7 +11,7 @@ ITEM.functions.Eat = {
 	OnRun = function(itemTable)
 		local client = itemTable.player
 		
-		client:SetAction("Eating Chinese Takeout.", 5)
+		client:SetAction("Eating Package of Noodles.", 5)
 		client:EmitSound("npc/barnacle/barnacle_crunch2.wav", 75, 100, 0.5)
 		
 		timer.Simple(2.5, function()
