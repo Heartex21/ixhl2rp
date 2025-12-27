@@ -357,6 +357,88 @@ local citizenVoicelines = {
 	}
 }
 
+-- Metropolice voiceline categories
+local metropoliceVoicelines = {
+	-- 1 - Status & Communication
+	{
+		{"copy", "Copy."},
+		{"affirmative", "Affirmative."},
+		{"10-4", "10-4."},
+		{"10-2", "10-2."},
+		{"responding", "Responding."},
+		{"10-8", "Unit is on-duty, 10-8."},
+		{"location", "Location?"},
+		{"patrol", "Patrol!"},
+		{"checkpoints", "Proceed to designated checkpoints."},
+		{"atcheckpoint", "At checkpoint."}
+	},
+	-- 2 - Contact & Engagement
+	{
+		{"contact", "Contact!"},
+		{"engaging", "Engaging!"},
+		{"acquiring", "Acquiring on visual!"},
+		{"closing", "Closing!"},
+		{"converging", "Converging."},
+		{"sweeping", "Sweeping for suspect!"},
+		{"moving", "Moving to cover!"},
+		{"movein", "All units, move in!"},
+		{"breakcover", "Break his cover!"},
+		{"expose", "Firing to expose target!"}
+	},
+	-- 3 - Alerts & Codes
+	{
+		{"code2", "All units, code two!"},
+		{"code3", "Officer down, request all units, code three to my 10-20!"},
+		{"code7", "Code seven."},
+		{"backup", "Backup!"},
+		{"help", "Help!"},
+		{"overrun", "CP is overrun, we have no containment!"},
+		{"compromised", "CP is compromised, re-establish!"},
+		{"officerdown", "10-78"},
+		{"anticitizen", "Anti-citizen."},
+		{"priority", "I have contact with a priority two!"}
+	},
+	-- 4 - Orders & Commands
+	{
+		{"moveout", "All units, move to arrest positions!"},
+		{"getdown", "Get down!"},
+		{"dontmove", "Don't move!"},
+		{"apply", "Apply."},
+		{"administer", "Administer."},
+		{"amputate", "Amputate."},
+		{"prosecute", "Ready to prosecute!"},
+		{"judge", "Ready to judge."},
+		{"inalwarning", "Final warning!"},
+		{"firstwarning", "First warning, move away!"}
+	},
+	-- 5 - Suspects & Targets
+	{
+		{"suspectone", "Suspect is bleeding from multiple wounds!"},
+		{"suspect243", "Contact with 243 suspect, my 10-20 is..."},
+		{"designate", "Designate suspect as..."},
+		{"allclose", "All units, close on suspect!"},
+		{"reportloc", "All units, report location suspect!"},
+		{"goa", "10-97, that suspect is GOA."},
+		{"anticitizen", "Anti-citizen."},
+		{"malcompliant", "Malcompliant citizen."},
+		{"restrictedblock", "Restricted block."},
+		{"fleeing", "Fleeing suspect!"}
+	},
+	-- 6 - Confirmations & Reports
+	{
+		{"reportclear", "Reporting clear."},
+		{"contained", "Contained."},
+		{"cleaned", "Cleaned."},
+		{"controlled", "Control is one-hundred percent this location."},
+		{"blockcohesive", "Block is holding, cohesive."},
+		{"cleared", "Clear and code one-hundred."},
+		{"verdict", "Final verdict administered."},
+		{"document", "Document."},
+		{"defender", "Defender!"},
+		{"readyweapons", "Ready weapons!"}
+	}
+}
+
 concommand.Add("ix_toggleleftpanel", function()
 	if (IsValid(ix.gui.leftPanel)) then
 		ix.gui.leftPanel:Remove()
@@ -593,14 +675,120 @@ concommand.Add("ix_toggleleftpanel", function()
 				local textAlpha = math.min(self.alpha, 255)
 				local textColor = Color(255, 255, 255, textAlpha)
 				
-				-- Placeholder text
-				draw.SimpleText("METROPOLICE PANEL", "ixMediumFont", w / 2, h / 2, textColor, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+				if (self.selectedCategory) then
+					-- Show voicelines for selected category
+					local voicelines = metropoliceVoicelines[self.selectedCategory]
+					local paddingTop = 20
+					local ySpacing = 35 -- Fixed spacing between voiceline items
+					local yStart = paddingTop
+					
+					for i = 1, math.min(10, #voicelines) do
+						local displayNum = i == 10 and 0 or i
+						local voiceline = voicelines[i]
+						local text = displayNum .. " - " .. voiceline[2]
+						draw.SimpleText(text, "ixMediumFont", 15, yStart + ySpacing * (i - 1), textColor, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
+					end
+				else
+					-- Show category list
+					local paddingTop = 30
+					local ySpacing = 25 -- Fixed spacing between items
+					local yStart = paddingTop
+					
+					draw.SimpleText("1 - Status & Communication", "ixMediumFont", 15, yStart, textColor, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
+					draw.SimpleText("2 - Contact & Engagement", "ixMediumFont", 15, yStart + ySpacing, textColor, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
+					draw.SimpleText("3 - Alerts & Codes", "ixMediumFont", 15, yStart + ySpacing * 2, textColor, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
+					draw.SimpleText("4 - Orders & Commands", "ixMediumFont", 15, yStart + ySpacing * 3, textColor, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
+					draw.SimpleText("5 - Suspects & Targets", "ixMediumFont", 15, yStart + ySpacing * 4, textColor, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
+					draw.SimpleText("6 - Confirmations & Reports", "ixMediumFont", 15, yStart + ySpacing * 5, textColor, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
+				end
 			end
 			
 			function panel:Think()
-				-- Handle fade in
-				if (self.alpha < self.targetAlpha) then
+				-- Handle fade out
+				if (self.fadingOut) then
+					self.alpha = math.max(0, self.alpha - (255 / self.fadeOutTime) * FrameTime())
+					if (self.alpha <= 0) then
+						self:Remove()
+						return
+					end
+				elseif (self.alpha < self.targetAlpha) then
 					self.alpha = math.min(self.alpha + self.fadeSpeed * FrameTime(), self.targetAlpha)
+				end
+				
+				-- Handle panel size based on selected category
+				local targetWidth = self.selectedCategory and self.voicelineWidth or self.categoryWidth
+				local targetHeight = self.selectedCategory and self.voicelineHeight or self.categoryHeight
+				if (self:GetWide() != targetWidth or self:GetTall() != targetHeight) then
+					self:SetSize(targetWidth, targetHeight)
+					self:SetPos(20, (ScrH() - targetHeight) / 2)
+				end
+				
+				local currentTime = CurTime()
+				local debounceDelay = 0.3
+				
+				-- Check if we can process key presses (debounce)
+				local function CanPressKey(key)
+					if not self.lastKeyPressTime[key] then
+						return true
+					end
+					return (currentTime - self.lastKeyPressTime[key]) >= debounceDelay
+				end
+				
+				local function MarkKeyPressed(key)
+					self.lastKeyPressTime[key] = currentTime
+				end
+				
+				-- Detect number key presses
+				if (self.selectedCategory) then
+					-- We're viewing voicelines, check for voiceline selection (1-0)
+					local voicelineKeys = {KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7, KEY_8, KEY_9, KEY_0}
+					for i, key in ipairs(voicelineKeys) do
+						if (input.IsKeyDown(key) and CanPressKey(key)) then
+							MarkKeyPressed(key)
+							
+							local voicelineIndex = (i == 10) and 10 or i
+							local voicelines = metropoliceVoicelines[self.selectedCategory]
+							
+							if (voicelines[voicelineIndex]) then
+								local voiceCommand = voicelines[voicelineIndex][1]
+								RunConsoleCommand("say", voiceCommand)
+								
+								-- Start fade out
+								self.fadingOut = true
+							end
+							break
+						end
+					end
+				else
+					-- We're viewing categories, check for category selection (1-6)
+					if (input.IsKeyDown(KEY_1) and CanPressKey(KEY_1)) then
+						MarkKeyPressed(KEY_1)
+						self.selectedCategory = 1
+					elseif (input.IsKeyDown(KEY_2) and CanPressKey(KEY_2)) then
+						MarkKeyPressed(KEY_2)
+						self.selectedCategory = 2
+					elseif (input.IsKeyDown(KEY_3) and CanPressKey(KEY_3)) then
+						MarkKeyPressed(KEY_3)
+						self.selectedCategory = 3
+					elseif (input.IsKeyDown(KEY_4) and CanPressKey(KEY_4)) then
+						MarkKeyPressed(KEY_4)
+						self.selectedCategory = 4
+					elseif (input.IsKeyDown(KEY_5) and CanPressKey(KEY_5)) then
+						MarkKeyPressed(KEY_5)
+						self.selectedCategory = 5
+					elseif (input.IsKeyDown(KEY_6) and CanPressKey(KEY_6)) then
+						MarkKeyPressed(KEY_6)
+						self.selectedCategory = 6
+					end
+				end
+				
+				-- Handle back navigation
+				if (input.IsKeyDown(KEY_BACKSPACE) or input.IsKeyDown(KEY_ESCAPE)) then
+					if (CanPressKey(KEY_BACKSPACE)) then
+						MarkKeyPressed(KEY_BACKSPACE)
+						MarkKeyPressed(KEY_ESCAPE)
+						self.selectedCategory = nil
+					end
 				end
 			end
 			
