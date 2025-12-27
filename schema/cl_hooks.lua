@@ -474,6 +474,8 @@ concommand.Add("ix_toggleleftpanel", function()
 			panel.lastKeyPressTime = {}
 			panel.fadingOut = false
 			panel.fadeOutTime = 0.15
+			panel.scanLineY = 0
+			panel.scanLineSpeed = 100
 			
 			function panel:Paint(w, h)
 				-- Draw outer outline (orange for citizens)
@@ -498,8 +500,15 @@ concommand.Add("ix_toggleleftpanel", function()
 			surface.DrawLine(15, 10, 15, h - 10)
 			surface.DrawLine(w - 15, 10, w - 15, h - 10)
 			
+			-- Scanning line effect
+			local scanAlpha = math.min(self.alpha * 0.6, 153)
+			surface.SetDrawColor(255, 255, 255, scanAlpha)
+			surface.DrawLine(7, self.scanLineY, w - 7, self.scanLineY)
+			
 			local textAlpha = math.min(self.alpha, 255)
 			local textColor = Color(255, 255, 255, textAlpha)
+			
+			if (self.selectedCategory) then
 			
 			if (self.selectedCategory) then
 				-- Show voicelines for selected category
@@ -539,6 +548,12 @@ concommand.Add("ix_toggleleftpanel", function()
 				end
 			elseif (self.alpha < self.targetAlpha) then
 				self.alpha = math.min(self.alpha + self.fadeSpeed * FrameTime(), self.targetAlpha)
+			end
+			
+			-- Update scan line position
+			self.scanLineY = self.scanLineY + self.scanLineSpeed * FrameTime()
+			if (self.scanLineY > self:GetTall() - 7) then
+				self.scanLineY = 7
 			end
 			
 			-- Handle panel size based on selected category
@@ -648,6 +663,8 @@ concommand.Add("ix_toggleleftpanel", function()
 			panel.lastKeyPressTime = {}
 			panel.fadingOut = false
 			panel.fadeOutTime = 0.15
+			panel.scanLineY = 0
+			panel.scanLineSpeed = 100
 			
 			function panel:Paint(w, h)
 				-- Draw outer outline (blue for metropolice)
@@ -672,10 +689,13 @@ concommand.Add("ix_toggleleftpanel", function()
 				surface.DrawLine(15, 10, 15, h - 10)
 				surface.DrawLine(w - 15, 10, w - 15, h - 10)
 				
-				local textAlpha = math.min(self.alpha, 255)
-				local textColor = Color(255, 255, 255, textAlpha)
-				
-				if (self.selectedCategory) then
+				-- Scanning line effect
+				local scanAlpha = math.min(self.alpha * 0.6, 153)
+				surface.SetDrawColor(255, 255, 255, scanAlpha)
+			surface.DrawLine(7, self.scanLineY, w - 7, self.scanLineY)
+			
+			local textAlpha = math.min(self.alpha, 255)
+			local textColor = Color(255, 255, 255, textAlpha)
 					-- Show voicelines for selected category
 					local voicelines = metropoliceVoicelines[self.selectedCategory]
 					local paddingTop = 20
@@ -713,6 +733,18 @@ concommand.Add("ix_toggleleftpanel", function()
 					end
 				elseif (self.alpha < self.targetAlpha) then
 					self.alpha = math.min(self.alpha + self.fadeSpeed * FrameTime(), self.targetAlpha)
+				end
+				
+				-- Update scan line position
+				self.scanLineY = self.scanLineY + self.scanLineSpeed * FrameTime()
+				if (self.scanLineY > self:GetTall()) then
+					self.scanLineY = 0
+				end
+				
+				-- Update scan line position
+				self.scanLineY = self.scanLineY + self.scanLineSpeed * FrameTime()
+				if (self.scanLineY > self:GetTall() - 7) then
+					self.scanLineY = 7
 				end
 				
 				-- Handle panel size based on selected category
