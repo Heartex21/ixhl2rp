@@ -362,32 +362,40 @@ concommand.Add("ix_toggleleftpanel", function()
 		ix.gui.leftPanel:Remove()
 		ix.gui.leftPanel = nil
 	else
-		local panel = vgui.Create("DPanel")
+		local playerFaction = LocalPlayer():Team()
 		
-		-- Calculate panel size based on content
-		local categoryWidth = 350
-		local categoryHeight = 220 -- Enough for 6 categories with 25px spacing + padding
-		local voicelineWidth = 500
-		local voicelineHeight = 400 -- Enough for 10 voicelines with 35px spacing + padding
-		
-		panel:SetSize(categoryWidth, categoryHeight)
-		panel:SetPos(20, (ScrH() - categoryHeight) / 2)
-		
-		panel.alpha = 0
-		panel.targetAlpha = 180
-		panel.fadeSpeed = 1200 -- alpha per second
-		panel.selectedCategory = nil
-		panel.categoryWidth = categoryWidth
-		panel.categoryHeight = categoryHeight
-		panel.voicelineWidth = voicelineWidth
-		panel.voicelineHeight = voicelineHeight
-		panel.lastKeyPressTime = {}
-		panel.fadingOut = false
-		panel.fadeOutTime = 0.15
-		
-		function panel:Paint(w, h)
-			-- Draw outer outline
-			draw.RoundedBox(8, 0, 0, w, h, Color(220, 130, 50, self.alpha))
+		-- Check if player is a citizen
+		if (playerFaction == FACTION_CITIZEN) then
+			-- Create Citizen Panel
+			local panel = vgui.Create("DPanel")
+			
+			-- Calculate panel size based on content
+			local categoryWidth = 350
+			local categoryHeight = 220 -- Enough for 6 categories with 25px spacing + padding
+			local voicelineWidth = 500
+			local voicelineHeight = 400 -- Enough for 10 voicelines with 35px spacing + padding
+			
+			panel:SetSize(categoryWidth, categoryHeight)
+			panel:SetPos(20, (ScrH() - categoryHeight) / 2)
+			panel:MakePopup()
+			panel:SetKeyboardInputEnabled(false)
+			panel:SetMouseInputEnabled(false)
+			
+			panel.alpha = 0
+			panel.targetAlpha = 180
+			panel.fadeSpeed = 1200 -- alpha per second
+			panel.selectedCategory = nil
+			panel.categoryWidth = categoryWidth
+			panel.categoryHeight = categoryHeight
+			panel.voicelineWidth = voicelineWidth
+			panel.voicelineHeight = voicelineHeight
+			panel.lastKeyPressTime = {}
+			panel.fadingOut = false
+			panel.fadeOutTime = 0.15
+			
+			function panel:Paint(w, h)
+				-- Draw outer outline (orange for citizens)
+				draw.RoundedBox(8, 0, 0, w, h, Color(220, 130, 50, self.alpha))
 			-- Draw black background
 			draw.RoundedBox(8, 2, 2, w - 4, h - 4, Color(0, 0, 0, self.alpha))
 			-- Draw inner white outline
@@ -529,5 +537,74 @@ concommand.Add("ix_toggleleftpanel", function()
 		end
 		
 		ix.gui.leftPanel = panel
+		
+	-- Check if player is metropolice
+	elseif (playerFaction == FACTION_MPF) then
+			-- Create Metropolice Panel
+			local panel = vgui.Create("DPanel")
+			
+			-- Calculate panel size based on content
+			local categoryWidth = 350
+			local categoryHeight = 220
+			local voicelineWidth = 500
+			local voicelineHeight = 400
+			
+			panel:SetSize(categoryWidth, categoryHeight)
+			panel:SetPos(20, (ScrH() - categoryHeight) / 2)
+			panel:MakePopup()
+			panel:SetKeyboardInputEnabled(false)
+			panel:SetMouseInputEnabled(false)
+			
+			panel.alpha = 0
+			panel.targetAlpha = 180
+			panel.fadeSpeed = 1200
+			panel.selectedCategory = nil
+			panel.categoryWidth = categoryWidth
+			panel.categoryHeight = categoryHeight
+			panel.voicelineWidth = voicelineWidth
+			panel.voicelineHeight = voicelineHeight
+			panel.lastKeyPressTime = {}
+			panel.fadingOut = false
+			panel.fadeOutTime = 0.15
+			
+			function panel:Paint(w, h)
+				-- Draw outer outline (blue for metropolice)
+				draw.RoundedBox(8, 0, 0, w, h, Color(50, 120, 200, self.alpha))
+				-- Draw black background
+				draw.RoundedBox(8, 2, 2, w - 4, h - 4, Color(0, 0, 0, self.alpha))
+				-- Draw inner white outline
+				draw.RoundedBox(6, 6, 6, w - 12, h - 12, Color(255, 255, 255, math.min(self.alpha * 0.3, 76)))
+				draw.RoundedBox(6, 7, 7, w - 14, h - 14, Color(0, 0, 0, self.alpha))
+				
+				-- Helmet vision scan lines effect
+				local scanLineSpacing = 3
+				local scanLineAlpha = math.min(self.alpha * 0.15, 27)
+				for y = 10, h - 10, scanLineSpacing do
+					surface.SetDrawColor(50, 120, 200, scanLineAlpha)
+					surface.DrawLine(10, y, w - 10, y)
+				end
+				
+				-- Add vertical accent lines on sides
+				local accentAlpha = math.min(self.alpha * 0.2, 36)
+				surface.SetDrawColor(50, 120, 200, accentAlpha)
+				surface.DrawLine(15, 10, 15, h - 10)
+				surface.DrawLine(w - 15, 10, w - 15, h - 10)
+				
+				local textAlpha = math.min(self.alpha, 255)
+				local textColor = Color(255, 255, 255, textAlpha)
+				
+				-- Placeholder text
+				draw.SimpleText("METROPOLICE PANEL", "ixMediumFont", w / 2, h / 2, textColor, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+			end
+			
+			function panel:Think()
+				-- Handle fade in
+				if (self.alpha < self.targetAlpha) then
+					self.alpha = math.min(self.alpha + self.fadeSpeed * FrameTime(), self.targetAlpha)
+				end
+			end
+			
+			ix.gui.leftPanel = panel
+		end
 	end
 end)
