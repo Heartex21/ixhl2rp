@@ -440,6 +440,21 @@ local metropoliceVoicelines = {
 }
 
 if (CLIENT) then
+	-- Prevent weapon switching when voiceline panel is open
+	hook.Add("PlayerBindPress", "ixVoicelinePanelBlockWeaponSwitch", function(client, bind, pressed)
+		if (IsValid(ix.gui.leftPanel) and pressed) then
+			-- Block slot selection (slot1, slot2, slot3, etc.)
+			if (bind:find("slot")) then
+				return true
+			end
+			
+			-- Block invnext/invprev (scroll wheel weapon switching)
+			if (bind:find("invnext") or bind:find("invprev")) then
+				return true
+			end
+		end
+	end)
+	
 	local status, err = pcall(function()
 		concommand.Add("ix_toggleleftpanel", function()
 			if (IsValid(ix.gui.leftPanel)) then
@@ -462,8 +477,16 @@ if (CLIENT) then
 			panel:SetSize(categoryWidth, categoryHeight)
 			panel:SetPos(20, (ScrH() - categoryHeight) / 2)
 			panel:MakePopup()
-			panel:SetKeyboardInputEnabled(false)
+			panel:SetKeyboardInputEnabled(true)
 			panel:SetMouseInputEnabled(false)
+			
+			-- Override to consume number key presses
+			function panel:OnKeyCodePressed(key)
+				-- Consume all number keys and backspace/escape to prevent weapon/inventory switching
+				if (key >= KEY_1 and key <= KEY_0) or key == KEY_BACKSPACE or key == KEY_ESCAPE then
+					return true
+				end
+			end
 			
 			panel.alpha = 0
 			panel.targetAlpha = 180
@@ -649,8 +672,16 @@ if (CLIENT) then
 			panel:SetSize(categoryWidth, categoryHeight)
 			panel:SetPos(20, (ScrH() - categoryHeight) / 2)
 			panel:MakePopup()
-			panel:SetKeyboardInputEnabled(false)
+			panel:SetKeyboardInputEnabled(true)
 			panel:SetMouseInputEnabled(false)
+			
+			-- Override to consume number key presses
+			function panel:OnKeyCodePressed(key)
+				-- Consume all number keys and backspace/escape to prevent weapon/inventory switching
+				if (key >= KEY_1 and key <= KEY_0) or key == KEY_BACKSPACE or key == KEY_ESCAPE then
+					return true
+				end
+			end
 			
 			panel.alpha = 0
 			panel.targetAlpha = 180
