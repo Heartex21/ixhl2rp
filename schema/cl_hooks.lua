@@ -610,6 +610,11 @@ if (CLIENT) then
 	-- Prevent weapon switching when voiceline panel is open
 	hook.Add("PlayerBindPress", "ixVoicelinePanelBlockWeaponSwitch", function(client, bind, pressed)
 		if (IsValid(ix.gui.leftPanel) and pressed) then
+			-- Allow the toggle panel command to close the panel
+			if (bind:find("ix_toggleleftpanel")) then
+				return false
+			end
+			
 			-- Block slot selection (slot1, slot2, slot3, etc.)
 			if (bind:find("slot")) then
 				return true
@@ -726,6 +731,10 @@ if (CLIENT) then
 				draw.SimpleText("5 - Guilt", "ixMediumFont", 15, yStart + ySpacing * 4, textColor, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
 				draw.SimpleText("6 - Cheer", "ixMediumFont", 15, yStart + ySpacing * 5, textColor, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
 			end
+			
+			-- Draw "Backspace - Close" at the bottom
+			local closeText = self.selectedCategory and "Backspace - Back" or "Backspace - Close"
+			draw.SimpleText(closeText, "ixMediumFont", w / 2, h - 35, textColor, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
 		end
 		
 		function panel:Think()
@@ -823,7 +832,14 @@ if (CLIENT) then
 				if (CanPressKey(KEY_BACKSPACE)) then
 					MarkKeyPressed(KEY_BACKSPACE)
 					MarkKeyPressed(KEY_ESCAPE)
-					self.selectedCategory = nil
+					
+					if (self.selectedCategory) then
+						-- Go back to category list
+						self.selectedCategory = nil
+					else
+						-- Close the panel
+						self.fadingOut = true
+					end
 				end
 			end
 		end
@@ -924,10 +940,10 @@ if (CLIENT) then
 					draw.SimpleText("5 - Suspects & Targets", "ixMediumFont", 15, yStart + ySpacing * 4, textColor, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
 					draw.SimpleText("6 - Confirmations & Reports", "ixMediumFont", 15, yStart + ySpacing * 5, textColor, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
 				end
-			end
 			
-			function panel:Think()
-				-- Handle fade out
+			-- Draw "Backspace - Close" at the bottom
+			local closeText = self.selectedCategory and "Backspace - Back" or "Backspace - Close"
+		draw.SimpleText(closeText, "ixMediumFont", w / 2, h - 35, textColor, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
 				if (self.fadingOut) then
 					self.alpha = math.max(0, self.alpha - (255 / self.fadeOutTime) * FrameTime())
 					if (self.alpha <= 0) then
@@ -1022,7 +1038,14 @@ if (CLIENT) then
 					if (CanPressKey(KEY_BACKSPACE)) then
 						MarkKeyPressed(KEY_BACKSPACE)
 						MarkKeyPressed(KEY_ESCAPE)
-						self.selectedCategory = nil
+						
+						if (self.selectedCategory) then
+							-- Go back to category list
+							self.selectedCategory = nil
+						else
+							-- Close the panel
+							self.fadingOut = true
+						end
 					end
 				end
 			end
