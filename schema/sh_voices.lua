@@ -752,7 +752,7 @@ Schema.voices.Add("Combine", "classify db", "Classify subject name as 'DB'; this
 Schema.voices.Add("Combine", "cleaned", "Cleaned.", "npc/combine_soldier/vo/cleaned.wav")
 Schema.voices.Add("Combine", "clear code 100", "Clear and code one-hundred.", "npc/metropolice/vo/clearandcode100.wav")
 Schema.voices.Add("Combine", "close on suspect", "All units, close on suspect!", "npc/metropolice/vo/allunitscloseonsuspect.wav")
-Schema.voices.Add("Combine", "closing", "Closing!", {"npc/combine_soldier/vo/closing.wav", "npc/combine_soldier/vo/closing2.wav"})
+Schema.voices.Add("Combine", "closing", "Closing!", "npc/combine_soldier/vo/closing.wav")
 Schema.voices.Add("Combine", "code 100", "Code one-hundred.", "npc/metropolice/vo/code100.wav")
 Schema.voices.Add("Combine", "code 2", "All units, code two!", "npc/metropolice/vo/allunitscode2.wav")
 Schema.voices.Add("Combine", "code 3", "Officer down, request all units, code three to my 10-20!", "npc/metropolice/vo/officerdowncode3tomy10-20.wav")

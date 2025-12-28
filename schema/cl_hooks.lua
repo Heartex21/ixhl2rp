@@ -439,10 +439,12 @@ local metropoliceVoicelines = {
 	}
 }
 
-concommand.Add("ix_toggleleftpanel", function()
-	if (IsValid(ix.gui.leftPanel)) then
-		ix.gui.leftPanel:Remove()
-		ix.gui.leftPanel = nil
+if (CLIENT) then
+	local status, err = pcall(function()
+		concommand.Add("ix_toggleleftpanel", function()
+			if (IsValid(ix.gui.leftPanel)) then
+				ix.gui.leftPanel:Remove()
+				ix.gui.leftPanel = nil
 	else
 		local playerFaction = LocalPlayer():Team()
 		
@@ -507,8 +509,6 @@ concommand.Add("ix_toggleleftpanel", function()
 			
 			local textAlpha = math.min(self.alpha, 255)
 			local textColor = Color(255, 255, 255, textAlpha)
-			
-			if (self.selectedCategory) then
 			
 			if (self.selectedCategory) then
 				-- Show voicelines for selected category
@@ -634,7 +634,7 @@ concommand.Add("ix_toggleleftpanel", function()
 		end
 		
 		ix.gui.leftPanel = panel
-		
+	
 	-- Check if player is metropolice
 	elseif (playerFaction == FACTION_MPF) then
 			-- Create Metropolice Panel
@@ -695,8 +695,8 @@ concommand.Add("ix_toggleleftpanel", function()
 			surface.DrawLine(7, self.scanLineY, w - 7, self.scanLineY)
 			
 			local textAlpha = math.min(self.alpha, 255)
-			local textColor = Color(255, 255, 255, textAlpha)
-					-- Show voicelines for selected category
+			local textColor = Color(255, 255, 255, textAlpha)		
+		if (self.selectedCategory) then					-- Show voicelines for selected category
 					local voicelines = metropoliceVoicelines[self.selectedCategory]
 					local paddingTop = 20
 					local ySpacing = 35 -- Fixed spacing between voiceline items
@@ -827,4 +827,10 @@ concommand.Add("ix_toggleleftpanel", function()
 			ix.gui.leftPanel = panel
 		end
 	end
-end)
+	end)
+	end)
+	
+	if not status then
+		ErrorNoHalt("Error loading voiceline panel: " .. tostring(err) .. "\n")
+	end
+end
