@@ -281,6 +281,8 @@ if (CLIENT) then
 	local wasExhausted = false
 	local shakeOffset = 0
 	local blurIntensity = 0
+	local displayedStamina = 100
+	local exhaustedSprintTime = 0
 	
 	function Schema:HUDPaint()
 		local client = LocalPlayer()
@@ -336,6 +338,9 @@ if (CLIENT) then
 			staminaBarAlpha = math.max(staminaBarAlpha - FrameTime() * 600, 0)
 		end
 		
+		-- Smooth stamina display with very slow lerp to compensate for server tick updates
+		displayedStamina = Lerp(FrameTime() * 1, displayedStamina, stamina)
+		
 		if (staminaBarAlpha > 0) then
 			local barWidth = 300
 			local barHeight = 20
@@ -353,10 +358,12 @@ if (CLIENT) then
 			-- Draw bar background
 			draw.RoundedBox(4, barX, barY, barWidth, barHeight, Color(0, 0, 0, staminaBarAlpha * 0.7))
 			
-			-- Draw stamina fill
-			local fillWidth = math.max(0, (stamina / 100) * (barWidth - 4))
-			if (fillWidth > 0) then
-				draw.RoundedBox(2, barX + 2, barY + 2, fillWidth, barHeight - 4, barColor)
+			-- Draw stamina fill using lerped value for smooth animation
+			local fillWidth = (displayedStamina / 100) * (barWidth - 4)
+			if (fillWidth > 0.1) then
+				-- Use surface library for sub-pixel accuracy
+				surface.SetDrawColor(barColor.r, barColor.g, barColor.b, staminaBarAlpha)
+				surface.DrawRect(barX + 2, barY + 2, fillWidth, barHeight - 4)
 			end
 			
 			-- Draw outline
@@ -390,6 +397,19 @@ if (CLIENT) then
 				breathSound:Stop()
 				breathSound = nil
 			end
+		end
+		
+		-- Handle exhaustion collapse (fall over after 4 seconds of sprinting at 0%)
+		if (stamina <= 0 and client:KeyDown(IN_SPEED)) then
+			if (exhaustedSprintTime == 0) then
+				exhaustedSprintTime = CurTime()
+			elseif (CurTime() - exhaustedSprintTime >= 4) then
+				-- Request server to ragdoll the player
+				netstream.Start("StaminaCollapse")
+				exhaustedSprintTime = 0
+			end
+		else
+			exhaustedSprintTime = 0
 		end
 		
 		-- Handle exhaustion effects
@@ -729,22 +749,27 @@ if (CLIENT) then
 			-- Handle panel size based on selected category
 			local targetWidth = self.selectedCategory and self.voicelineWidth or self.categoryWidth
 			local targetHeight = self.selectedCategory and self.voicelineHeight or self.categoryHeight
-			if (self:GetWide() != targetWidth or self:GetTall() != targetHeight) then
-				self:SetSize(targetWidth, targetHeight)
-				self:SetPos(20, (ScrH() - targetHeight) / 2)
+			
+			-- Smooth size transition with lerp
+			if (!self.currentWidth) then self.currentWidth = self:GetWide() end
+			if (!self.currentHeight) then self.currentHeight = self:GetTall() end
+			
+			self.currentWidth = Lerp(FrameTime() * 12, self.currentWidth, targetWidth)
+			self.currentHeight = Lerp(FrameTime() * 12, self.currentHeight, targetHeight)
+			
+			self:SetSize(self.currentWidth, self.currentHeight)
+		self:SetPos(20, (ScrH() - self.currentHeight) / 2)
+		
+		local currentTime = CurTime()
+		local debounceDelay = 0.3
+		
+		-- Check if we can process key presses (debounce)
+		local function CanPressKey(key)
+			if not self.lastKeyPressTime[key] then
+				return true
 			end
-			
-			local currentTime = CurTime()
-			local debounceDelay = 0.3
-			
-			-- Check if we can process key presses (debounce)
-			local function CanPressKey(key)
-				if not self.lastKeyPressTime[key] then
-					return true
-				end
-				return (currentTime - self.lastKeyPressTime[key]) >= debounceDelay
-			end
-			
+			return (currentTime - self.lastKeyPressTime[key]) >= debounceDelay
+		end
 			local function MarkKeyPressed(key)
 				self.lastKeyPressTime[key] = currentTime
 			end

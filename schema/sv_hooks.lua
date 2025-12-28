@@ -502,3 +502,15 @@ hook.Add("PostEntityFireBullets", "MetropoliceOutOfAmmo", function(ent, data)
 		end
 	end
 end)
+
+-- Handle stamina collapse
+netstream.Hook("StaminaCollapse", function(client)
+	if (!IsValid(client) or !client:Alive()) then return end
+	
+	local stamina = client:GetLocalVar("stm", 100)
+	
+	-- Verify they're actually at 0 stamina
+	if (stamina <= 0) then
+		client:SetRagdolled(true, 10) -- Ragdoll for 10 seconds
+	end
+end)
