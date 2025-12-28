@@ -93,6 +93,8 @@ function Schema:PostPlayerLoadout(client)
 
 	-- Start hunger/thirst decay timer (each lasts 60 minutes = 3600 seconds)
 	local uniqueID = "ixNutrition" .. client:SteamID()
+	client.ixLastStarvationDamage = 0
+	
 	timer.Create(uniqueID, 0.25, 0, function()
 		if (!IsValid(client)) then
 			timer.Remove(uniqueID)
@@ -116,6 +118,20 @@ function Schema:PostPlayerLoadout(client)
 
 		client:SetLocalVar("hunger", newHunger)
 		client:SetLocalVar("thirst", newThirst)
+		
+		-- Apply starvation/dehydration damage if hunger or thirst reaches 0
+		if ((newHunger <= 0 or newThirst <= 0) and client:Alive()) then
+			local currentTime = CurTime()
+			
+			-- Apply 15 damage every 25 seconds
+			if (currentTime - client.ixLastStarvationDamage >= 25) then
+				client:TakeDamage(15)
+				client.ixLastStarvationDamage = currentTime
+			end
+		else
+			-- Reset damage timer when hunger/thirst is restored above 0
+			client.ixLastStarvationDamage = 0
+		end
 	end)
 end
 
