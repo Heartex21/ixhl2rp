@@ -274,6 +274,153 @@ netstream.Hook("ViewObjectives", function(data)
 	vgui.Create("ixViewObjectives"):Populate(data)
 end)
 
+-- Stamina HUD system
+if (CLIENT) then
+	local staminaBarAlpha = 0
+	local breathSound = nil
+	local wasExhausted = false
+	local shakeOffset = 0
+	local blurIntensity = 0
+	
+	function Schema:HUDPaint()
+		local client = LocalPlayer()
+		if (!IsValid(client) or !client:Alive()) then 
+			if (breathSound) then
+				breathSound:Stop()
+				breathSound = nil
+			end
+			blurIntensity = 0
+			return 
+		end
+		
+		local stamina = client:GetLocalVar("stm", 100)
+		local breathless = client:GetNetVar("brth", false)
+		local faction = client:Team()
+		
+		-- Only apply stamina effects to citizens and metropolice
+		local isAffectedFaction = (faction == FACTION_CITIZEN or faction == FACTION_MPF)
+		if (!isAffectedFaction) then return end
+		
+		-- Track exhaustion state
+		local isExhausted = (breathless or stamina <= 0)
+		if (isExhausted and !wasExhausted) then
+			wasExhausted = true
+		end
+		
+		-- Calculate blur intensity based on stamina
+		local targetBlurIntensity = 0
+		if (wasExhausted and stamina < 50) then
+			-- Recovering from exhaustion: blur fades out from 0% to 50%
+			targetBlurIntensity = 1 - (stamina / 50)
+		elseif (stamina < 25) then
+			-- Going low: blur intensifies from 25% to 0%
+			targetBlurIntensity = 1 - (stamina / 25)
+		end
+		
+		-- Very smooth transition with small increments
+		local transitionSpeed = 0.15 -- Units per second (takes ~6.6 seconds to go from 0 to 1)
+		local increment = transitionSpeed * FrameTime()
+		
+		if (math.abs(targetBlurIntensity - blurIntensity) < increment) then
+			blurIntensity = targetBlurIntensity
+		elseif (targetBlurIntensity > blurIntensity) then
+			blurIntensity = blurIntensity + increment
+		else
+			blurIntensity = blurIntensity - increment
+		end
+		
+		-- Handle stamina bar (shows below 50%)
+		if (stamina < 50) then
+			staminaBarAlpha = math.min(staminaBarAlpha + FrameTime() * 400, 255)
+		else
+			staminaBarAlpha = math.max(staminaBarAlpha - FrameTime() * 600, 0)
+		end
+		
+		if (staminaBarAlpha > 0) then
+			local barWidth = 300
+			local barHeight = 20
+			local barX = ScrW() / 2 - barWidth / 2
+			local barY = ScrH() - 100
+			
+			-- Determine faction color
+			local barColor
+			if (faction == FACTION_MPF) then
+				barColor = Color(50, 120, 200, staminaBarAlpha)
+			else
+				barColor = Color(220, 130, 50, staminaBarAlpha)
+			end
+			
+			-- Draw bar background
+			draw.RoundedBox(4, barX, barY, barWidth, barHeight, Color(0, 0, 0, staminaBarAlpha * 0.7))
+			
+			-- Draw stamina fill
+			local fillWidth = math.max(0, (stamina / 100) * (barWidth - 4))
+			if (fillWidth > 0) then
+				draw.RoundedBox(2, barX + 2, barY + 2, fillWidth, barHeight - 4, barColor)
+			end
+			
+			-- Draw outline
+			surface.SetDrawColor(barColor.r, barColor.g, barColor.b, staminaBarAlpha)
+			surface.DrawOutlinedRect(barX, barY, barWidth, barHeight, 2)
+		end
+		
+		-- Handle breathing sounds
+		local shouldBreathe = false
+		
+		if (wasExhausted) then
+			-- If we were exhausted, keep breathing until 50%
+			if (stamina < 50) then
+				shouldBreathe = true
+			else
+				wasExhausted = false
+			end
+		elseif (stamina < 25 and stamina > 0) then
+			-- Normal low stamina breathing (below 25%)
+			shouldBreathe = true
+		end
+		
+		if (shouldBreathe) then
+			if (!breathSound or !breathSound:IsPlaying()) then
+				breathSound = CreateSound(client, "player/breathe1.wav")
+				breathSound:SetSoundLevel(50)
+				breathSound:PlayEx(0.2, 100)
+			end
+		else
+			if (breathSound) then
+				breathSound:Stop()
+				breathSound = nil
+			end
+		end
+		
+		-- Handle exhaustion effects
+		if (blurIntensity > 0.01) then
+			-- Use exponential curve for more gradual effect at low values
+			local exponentialIntensity = blurIntensity * blurIntensity
+			
+			-- Wave-like screen shake (proportional to blur intensity)
+			shakeOffset = shakeOffset + FrameTime() * 5 * exponentialIntensity
+			local shakeX = math.sin(shakeOffset) * 2 * exponentialIntensity
+			local shakeY = math.cos(shakeOffset * 1.3) * 1.5 * exponentialIntensity
+			
+			-- Apply screen blur with exponentially scaled intensity
+			local blurAmount = 0.02 * exponentialIntensity
+			local blurQuality = 0.5
+			local blurPasses = 0.002 + (0.008 * exponentialIntensity)
+			DrawMotionBlur(blurAmount, blurQuality, blurPasses)
+			
+			-- Apply view offset (shake)
+			local view = client:GetViewEntity()
+			if (IsValid(view)) then
+				local angles = view:EyeAngles()
+				angles.pitch = angles.pitch + shakeY * 0.3
+				angles.yaw = angles.yaw + shakeX * 0.3
+			end
+		else
+			shakeOffset = 0
+		end
+	end
+end
+
 -- Custom left-side panel toggle
 -- Citizen voiceline categories
 local citizenVoicelines = {
