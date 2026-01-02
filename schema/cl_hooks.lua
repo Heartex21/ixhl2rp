@@ -1,4 +1,14 @@
 
+-- Create custom fonts
+surface.CreateFont("ProjectOutlandsLogo", {
+	font = "Berlin Sans FB", -- Font name (fallback to Arial if not found)
+	size = 16,
+	weight = 500,
+	antialias = true,
+	shadow = false,
+	outline = true
+})
+
 function Schema:PopulateCharacterInfo(client, character, tooltip)
 	if (client:IsRestricted()) then
 		local panel = tooltip:AddRowAfter("name", "ziptie")
@@ -1059,4 +1069,40 @@ if (CLIENT) then
 	if not status then
 		ErrorNoHalt("Error loading voiceline panel: " .. tostring(err) .. "\n")
 	end
+end
+
+-- Draw custom logo in bottom right corner
+local logoMaterial = Material("custom/PJOLogo")
+function Schema:HUDPaint()
+	local scrW, scrH = ScrW(), ScrH()
+	local logoSize = 128 -- Adjust size as needed
+	local marginX = 200 -- Distance from right edge
+	local marginY = 100 -- Distance from bottom edge
+	
+	-- Position in bottom right with margin
+	local x = scrW - logoSize - marginX
+	local y = scrH - logoSize - marginY
+	
+	-- Set color with increased transparency (60% opacity)
+	surface.SetDrawColor(255, 255, 255, 153)
+	surface.SetMaterial(logoMaterial)
+	surface.DrawTexturedRect(x, y, logoSize, logoSize)
+	
+	-- Draw text below logo
+	local text1 = "Property of Project Outlands | All Rights Reserved"
+	local text2 = "Version 0.02 | Early Access Pre-Release"
+	
+	surface.SetFont("ProjectOutlandsLogo")
+	local text1W, text1H = surface.GetTextSize(text1)
+	local text2W, text2H = surface.GetTextSize(text2)
+	
+	-- First line - centered below logo with outline
+	local text1X = x + (logoSize / 2) - (text1W / 2)
+	local text1Y = y + logoSize + 5
+	draw.SimpleTextOutlined(text1, "ProjectOutlandsLogo", text1X, text1Y, Color(255, 255, 255, 100), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP, 1, Color(0, 0, 0, 120))
+	
+	-- Second line - centered below first line with outline
+	local text2X = x + (logoSize / 2) - (text2W / 2)
+	local text2Y = text1Y + text1H + 3 -- 3 pixels spacing between lines
+	draw.SimpleTextOutlined(text2, "ProjectOutlandsLogo", text2X, text2Y, Color(255, 255, 255, 100), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP, 1, Color(0, 0, 0, 120))
 end
