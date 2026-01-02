@@ -397,3 +397,44 @@ do
 
 	ix.command.Add("MPFSetRP", COMMAND)
 end
+
+-- City Code Commands
+do
+	local COMMAND = {}
+	COMMAND.description = "Set the city code. Admin only."
+	COMMAND.adminOnly = true
+	COMMAND.arguments = {ix.type.number}
+
+	function COMMAND:OnRun(client, code)
+		-- Validate code (1-4)
+		code = math.Clamp(math.floor(code), 1, 4)
+		
+		-- Set the new code
+		Schema:SetCityCode(code)
+		
+		-- Notify all players
+		local codeData = Schema:GetCityCodeInfo(code)
+		for k, v in ipairs(player.GetAll()) do
+			v:Notify("City code changed to: " .. codeData.name)
+		end
+		
+		return string.format("City code set to %s.", codeData.name)
+	end
+
+	ix.command.Add("SetCityCode", COMMAND)
+end
+
+do
+	local COMMAND = {}
+	COMMAND.description = "Check the current city code."
+
+	function COMMAND:OnRun(client)
+		local currentCode = Schema:GetCityCode()
+		local codeData = Schema:GetCityCodeInfo(currentCode)
+		
+		return string.format("Current city code: %s - %s", codeData.name, codeData.description)
+	end
+
+	ix.command.Add("CheckCityCode", COMMAND)
+end
+
