@@ -9,6 +9,76 @@ surface.CreateFont("ProjectOutlandsLogo", {
 	outline = true
 })
 
+-- MPF Reward Notice system
+net.Receive("ixMPFRewardNotice", function()
+	local ply = LocalPlayer()
+	local rpAmount = net.ReadUInt(8)
+	
+	-- Display in Combine HUD
+	Schema:AddCombineDisplayMessage("REWARD NOTICE: Protection Team Member, your family cohesion is preserved.", Color(50, 255, 50))
+	
+	-- Show final reward message and play rapid sounds after 3 seconds
+	timer.Simple(3, function()
+		if (IsValid(ply)) then
+			Schema:AddCombineDisplayMessage(string.format("You have been credited %d Rank Points.", rpAmount), Color(50, 255, 50))
+			
+			-- Play button rollover sound 10 times rapidly
+			local soundCount = 0
+			timer.Create("ixMPFRewardSound_" .. ply:EntIndex(), 0.03, 10, function()
+				if (IsValid(ply)) then
+					soundCount = soundCount + 1
+					surface.PlaySound("ui/buttonrollover.wav")
+				end
+			end)
+		end
+	end)
+end)
+
+-- MPF Punishment Notice system
+net.Receive("ixMPFPunishmentNotice", function()
+	local ply = LocalPlayer()
+	local rpAmount = net.ReadUInt(8)
+	
+	-- Play first sound immediately
+	ply:EmitSound("npc/overwatch/radiovoice/attentionyouhavebeenchargedwith.wav", 75, 100, 1, CHAN_AUTO)
+	
+	-- Show first message immediately
+	Schema:AddCombineDisplayMessage("Attention, You have been charged with: 99, Reckless Operation.", Color(255, 50, 50))
+	
+	-- Play second sound after 2.5 seconds
+	timer.Simple(2.5, function()
+		if (IsValid(ply)) then
+			ply:EmitSound("npc/overwatch/radiovoice/recklessoperation99.wav", 75, 100, 1, CHAN_AUTO)
+		end
+	end)
+	
+	-- Play third sound and show second message after 5 seconds
+	timer.Simple(5, function()
+		if (IsValid(ply)) then
+			ply:EmitSound("npc/overwatch/radiovoice/youarejudgedguilty.wav", 75, 100, 1, CHAN_AUTO)
+			Schema:AddCombineDisplayMessage("You are judged guilty by Civil Protection Teams", Color(255, 50, 50))
+		end
+	end)
+	
+	-- Show final deduction message and play rapid sounds after 7 seconds
+	timer.Simple(7, function()
+		if (IsValid(ply)) then
+			Schema:AddCombineDisplayMessage(string.format("You have been deducted of %d Rank Points.", rpAmount), Color(255, 50, 50))
+			
+			-- Play button rollover sound 10 times rapidly
+			local soundCount = 0
+			timer.Create("ixMPFDeductionSound_" .. ply:EntIndex(), 0.03, 10, function()
+				if (IsValid(ply)) then
+					soundCount = soundCount + 1
+					-- Use different pitch for variety and to ensure they all play
+					local pitch = 90 + (soundCount % 20)
+					surface.PlaySound("ui/buttonrollover.wav")
+				end
+			end)
+		end
+	end)
+end)
+
 function Schema:PopulateCharacterInfo(client, character, tooltip)
 	if (client:IsRestricted()) then
 		local panel = tooltip:AddRowAfter("name", "ziptie")

@@ -115,3 +115,35 @@ hook.Add("PlayerSpawn", "SetOverwatchHandsOnSpawn", function(player)
         print("[DEBUG] PlayerSpawn: Not OTA for", player:Name())
     end
 end)
+
+-- Automatically set MPF name based on RP when creating character
+function Schema:GetDefaultCharacterName(client, faction)
+	if (faction == FACTION_MPF) then
+		-- Get player's highest RP from their existing MPF characters
+		local rp = 0
+		
+		if (SERVER) then
+			-- Check all of player's characters for MPF rank
+			local characters = ix.char.loaded
+			
+			for _, char in pairs(characters) do
+				if (char:GetPlayer() == client or char:GetSteamID() == client:SteamID64()) then
+					if (char:GetFaction() == FACTION_MPF) then
+						local charRP = char:GetData("mpfRP", 0)
+						if (charRP > rp) then
+							rp = charRP
+						end
+					end
+				end
+			end
+		end
+		
+		-- Generate name based on RP
+		local rank = self:GetMPFRankByRP(rp)
+		local rankInfo = self:GetMPFRankInfo(rank)
+		local unitNum = math.random(1, 999)
+		local name = string.format("CP:%s.%s", rankInfo.display, self:ZeroNumber(unitNum, 3))
+		
+		return name, true -- return name and true to disable editing
+	end
+end

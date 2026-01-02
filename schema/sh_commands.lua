@@ -1,3 +1,9 @@
+-- Register network message for MPF reward notice
+if (SERVER) then
+	util.AddNetworkString("ixMPFRewardNotice")
+	util.AddNetworkString("ixMPFPunishmentNotice")
+end
+
 do
 	local COMMAND = {}
 	COMMAND.arguments = ix.type.text
@@ -199,4 +205,195 @@ do
 	end
 
 	ix.command.Add("CharSearch", COMMAND)
+end
+
+-- Metropolice Rank Commands
+
+do
+	local COMMAND = {}
+	COMMAND.description = "Give Rank Points to a Metropolice officer. Only usable by Rank Leaders."
+	COMMAND.arguments = {ix.type.character, ix.type.number}
+
+	function COMMAND:OnRun(client, target, amount)
+		local character = client:GetCharacter()
+		local targetChar = target
+		
+		-- Allow admins to bypass all checks
+		if (!client:IsAdmin()) then
+			-- Check if user is MPF
+			if (character:GetFaction() != FACTION_MPF) then
+				return "@notCombine"
+			end
+			
+			-- Check if user is Rank Leader
+			if (!Schema:IsRankLeader(character)) then
+				return "Only Rank Leaders can give Rank Points."
+			end
+		end
+		
+		-- Check if target is MPF
+		if (targetChar:GetFaction() != FACTION_MPF) then
+			return "Target is not in the Metropolice Force."
+		end
+		
+		-- Validate amount
+		if (amount < 1 or amount > 100) then
+			return "Amount must be between 1 and 100."
+		end
+		
+		-- Get current RP
+		local currentRP = targetChar:GetData("mpfRP", 0)
+		local newRP = math.Clamp(currentRP + amount, 0, 100)
+		
+		-- Set new RP
+		targetChar:SetData("mpfRP", newRP)
+		
+		-- Get rank info
+		local oldRank = Schema:GetMPFRankByRP(currentRP)
+		local newRank = Schema:GetMPFRankByRP(newRP)
+		local rankInfo = Schema:GetMPFRankInfo(newRank)
+		
+		local targetPlayer = targetChar:GetPlayer()
+		if (IsValid(targetPlayer)) then
+			-- Play reward sound
+			targetPlayer:EmitSound("npc/overwatch/radiovoice/rewardnotice.wav", 75, 100, 1, CHAN_AUTO)
+			
+			-- Send reward notice to HUD with RP amount
+			net.Start("ixMPFRewardNotice")
+				net.WriteUInt(amount, 8)
+			net.Send(targetPlayer)
+		end
+		
+		-- Update name
+		targetChar:SetName(Schema:GetMPFName(targetChar))
+	end
+
+	ix.command.Add("MPFGiveRP", COMMAND)
+end
+
+do
+	local COMMAND = {}
+	COMMAND.description = "Remove Rank Points from a Metropolice officer. Only usable by Rank Leaders."
+	COMMAND.arguments = {ix.type.character, ix.type.number}
+
+	function COMMAND:OnRun(client, target, amount)
+		local character = client:GetCharacter()
+		local targetChar = target
+		
+		-- Allow admins to bypass all checks
+		if (!client:IsAdmin()) then
+			-- Check if user is MPF
+			if (character:GetFaction() != FACTION_MPF) then
+				return "@notCombine"
+			end
+			
+			-- Check if user is Rank Leader
+			if (!Schema:IsRankLeader(character)) then
+				return "Only Rank Leaders can remove Rank Points."
+			end
+		end
+		
+		-- Check if target is MPF
+		if (targetChar:GetFaction() != FACTION_MPF) then
+			return "Target is not in the Metropolice Force."
+		end
+		
+		-- Validate amount
+		if (amount < 1 or amount > 100) then
+			return "Amount must be between 1 and 100."
+		end
+		
+		-- Get current RP
+		local currentRP = targetChar:GetData("mpfRP", 0)
+		local newRP = math.Clamp(currentRP - amount, 0, 100)
+		
+		-- Set new RP
+		targetChar:SetData("mpfRP", newRP)
+		
+		-- Get rank info
+		local oldRank = Schema:GetMPFRankByRP(currentRP)
+		local newRank = Schema:GetMPFRankByRP(newRP)
+		local rankInfo = Schema:GetMPFRankInfo(newRank)
+		
+		local targetPlayer = targetChar:GetPlayer()
+		if (IsValid(targetPlayer)) then
+			-- Send punishment sequence to client with RP amount
+			net.Start("ixMPFPunishmentNotice")
+				net.WriteUInt(amount, 8)
+			net.Send(targetPlayer)
+		end
+		
+		-- Update name
+		targetChar:SetName(Schema:GetMPFName(targetChar))
+	end
+
+	ix.command.Add("MPFRemoveRP", COMMAND)
+end
+
+do
+	local COMMAND = {}
+	COMMAND.description = "Check the Rank Points of a Metropolice officer."
+	COMMAND.arguments = {ix.type.character}
+
+	function COMMAND:OnRun(client, target)
+		local character = client:GetCharacter()
+		local targetChar = target
+		
+		-- Check if user is MPF
+		if (character:GetFaction() != FACTION_MPF) then
+			return "@notCombine"
+		end
+		
+		-- Check if target is MPF
+		if (targetChar:GetFaction() != FACTION_MPF) then
+			return "Target is not in the Metropolice Force."
+		end
+		
+		local rp = targetChar:GetData("mpfRP", 0)
+		local rank = Schema:GetMPFRankByRP(rp)
+		local rankInfo = Schema:GetMPFRankInfo(rank)
+		
+		return string.format("%s has %d RP [%s].", targetChar:GetName(), rp, rankInfo.display)
+	end
+
+	ix.command.Add("MPFCheckRP", COMMAND)
+end
+
+do
+	local COMMAND = {}
+	COMMAND.description = "Set exact Rank Points for a Metropolice officer. Admin only."
+	COMMAND.adminOnly = true
+	COMMAND.arguments = {ix.type.character, ix.type.number}
+
+	function COMMAND:OnRun(client, target, amount)
+		local targetChar = target
+		
+		-- Check if target is MPF
+		if (targetChar:GetFaction() != FACTION_MPF) then
+			return "Target is not in the Metropolice Force."
+		end
+		
+		-- Validate amount
+		amount = math.Clamp(amount, 0, 100)
+		
+		-- Set new RP
+		targetChar:SetData("mpfRP", amount)
+		
+		-- Get rank info
+		local rank = Schema:GetMPFRankByRP(amount)
+		local rankInfo = Schema:GetMPFRankInfo(rank)
+		
+		-- Notify
+		client:Notify(string.format("Set %s's RP to %d [%s].", targetChar:GetName(), amount, rankInfo.display))
+		
+		local targetPlayer = targetChar:GetPlayer()
+		if (IsValid(targetPlayer)) then
+			targetPlayer:Notify(string.format("Your RP was set to %d [%s].", amount, rankInfo.display))
+		end
+		
+		-- Update name
+		targetChar:SetName(Schema:GetMPFName(targetChar))
+	end
+
+	ix.command.Add("MPFSetRP", COMMAND)
 end

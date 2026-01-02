@@ -18,17 +18,25 @@ function FACTION:OnCharacterCreated(client, character)
 	inventory:Add("handheld_radio", 1)
 	inventory:Add("zip_tie", 3)
 
-	character:SetName(self:GetDefaultName())
+	-- Set initial RP to 0 (RPU rank)
+	character:SetData("mpfRP", 0)
+	character:SetName(Schema:GetMPFName(character))
 	character:SetModel(self.models[1])
 end
 	
 
-function FACTION:GetDefaultName(client)
+function FACTION:GetDefaultName(client, character)
+	-- Use RP-based name generation
+	if (character) then
+		return Schema:GetMPFName(character), true
+	end
 	return "CP:RPU." .. Schema:ZeroNumber(math.random(1, 999), 3), true
 end
 
 function FACTION:OnTransferred(character)
-	character:SetName(self:GetDefaultName())
+	-- Set to RPU when transferred
+	character:SetData("mpfRP", 0)
+	character:SetName(Schema:GetMPFName(character))
 	character:SetModel(self.models[1])
 
 	-- Apply the default bodygroups
@@ -44,7 +52,8 @@ function FACTION:OnTransferred(character)
 end
 
 function FACTION:OnCharacterLoaded(character)
-	character:SetName(self:GetDefaultName())
+	-- Update name based on current RP
+	character:SetName(Schema:GetMPFName(character))
 	character:SetModel(self.models[1])
 
 	-- Apply the default bodygroups
