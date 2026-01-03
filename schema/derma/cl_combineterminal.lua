@@ -14,6 +14,13 @@ surface.CreateFont("CombineTerminalTitle", {
     antialias = true,
 })
 
+surface.CreateFont("CombineTerminalSmall", {
+    font = "Consolas",
+    size = 7.8,
+    weight = 400,
+    antialias = true,
+})
+
 local PANEL = {}
 
 function PANEL:Init()
@@ -78,6 +85,130 @@ function PANEL:Init()
 	
 	-- Hover sound tracking
 	self.wasOverButton = false
+	
+	-- Active panel tracking
+	self.activePanel = nil
+	self.panelFadeAlpha = 0
+	self.panelFading = false	self.panelFadingOut = false	self.panelFadeStart = 0
+	self.nextPanel = nil
+	
+	-- Scrollbar tracking
+	self.scrollPosition = 0
+	self.isDraggingScrollbar = false
+	
+	-- Unit entries for Unit ID Index panel
+	self.unitEntries = {}
+	
+	-- BOL entries for lookout panel
+	self.bolEntries = {
+		{id = "#19342", reason = "Anti-Citizen Activity", time = "14:32"},
+		{id = "#19341", reason = "Contraband Possession", time = "14:28"},
+		{id = "#19340", reason = "Unauthorized Zone Entry", time = "14:15"},
+		{id = "#19339", reason = "Resisting Compliance", time = "14:02"},
+		{id = "#19338", reason = "Assault on CP Unit", time = "13:47"},
+		{id = "#19337", reason = "Curfew Violation", time = "13:23"},
+		{id = "#19336", reason = "Unregistered Biometrics", time = "13:10"},
+		{id = "#19335", reason = "Black Market Activity", time = "12:55"},
+		{id = "#19334", reason = "Civil Discord", time = "12:38"},
+		{id = "#19333", reason = "Unauthorized Communication", time = "12:19"},
+		{id = "#19332", reason = "Restricted Area Breach", time = "11:54"},
+		{id = "#19331", reason = "Malcompliance", time = "11:32"},
+	}
+	
+	-- Info box scrolling text
+	self.infoBoxTexts = {
+		"[NEXUS] MAINFRAME STATUS: OPERATIONAL",
+		"[OVERWATCH] TACTICAL SWEEP GRID: SECTOR-17",
+		"[BIOMETRICS] SCANNING FREQUENCY: 2.4 GHz",
+		"[DISPATCH] UNIT DEPLOYMENT: CODE-TANGO-4",
+		"[SURVEILLANCE] CAMERA ARRAY: 847 FEEDS ACTIVE",
+		"[SECURITY] PERIMETER BREACH: NIL",
+		"[CITIZEN] COMPLIANCE INDEX: 94.7%",
+		"[RATION] DISTRIBUTION CYCLE: 18:00 HRS",
+		"[CONTRABAND] SCAN RESULTS: 3 VIOLATIONS LOGGED",
+		"[NETWORK] UPLINK LATENCY: 12ms",
+		"[SYSTEM] CPU UTILIZATION: 67%",
+		"[MEMORY] CACHE STATUS: 2.4/8.0 GB",
+		"[PATROL] ROUTE-DELTA: WAYPOINT 7/12",
+		"[BIOSIGNAL] TRACKING 1,847 ENTITIES",
+		"[ALERT] PRIORITY-3: MISCOUNT DETECTED",
+		"[DATABASE] CITIZEN RECORDS: SYNCING...",
+		"[CIVIL PROTECTION] ACTIVE UNITS: 42",
+		"[OVERWATCH] TRANSHUMAN ARM: STANDBY",
+		"[SECTOR] LOCKDOWN STATUS: GREEN",
+		"[RESTRICTION] ZONE-9: AUTHORIZED ONLY",
+		"[STABILIZATION] FIELD INTEGRITY: 99.2%",
+		"[SOCIO-CREDIT] PROCESSED: 3,421 TRANSACTIONS",
+		"[TRIBUNAL] PENDING CASES: 17",
+		"[LOYALIST] REGISTRY UPDATE: 6 NEW ENTRIES",
+		"[VORTIGAUNT] LABOR ASSIGNMENTS: 89 ACTIVE",
+		"[TRAIN] DEPARTURE SCHEDULE: ON TIME",
+		"[COMMUNICATION] CHANNELS: ENCRYPTED",
+		"[HEALTH] MEDICAL STATION: 4 PATIENTS",
+		"[CHECKPOINT] SCANS COMPLETED: 1,204",
+		"[ANTI-CITIZEN] WATCHLIST: 34 FLAGGED",
+		"[HOUSING] BLOCK ASSIGNMENTS: UPDATED",
+		"[WORK] SHIFT SCHEDULE: ACTIVE",
+		"[TRANSIT] SYSTEM DELAYS: NONE",
+		"[CURFEW] ENFORCEMENT: 22:00 HRS",
+		"[SCANNER] PATROL UNITS: 12 DEPLOYED",
+		"[MANHACK] RESERVE: 847 UNITS READY",
+		"[APC] TRANSPORT: ROUTE BRAVO-3",
+		"[TURRET] DEFENSE GRID: ARMED",
+		"[FORCEFIELD] BARRIERS: ENERGIZED",
+		"[PROPAGANDA] BROADCAST: LOOP 4/12",
+	}
+	self.infoBoxDisplayed = {}
+	self.infoBoxNextIndex = 1
+	self.infoBoxNextTime = 0
+	self.infoBoxMaxLines = 14
+end
+
+function PANEL:UpdateUnitEntries()
+	self.unitEntries = {}
+	
+	-- Find all online Metrocops
+	for _, ply in ipairs(player.GetAll()) do
+		local char = ply:GetCharacter()
+		if char then
+			local factionID = char:GetFaction()
+			if factionID == FACTION_MPF then
+				-- Get unit data
+				local name = char:GetName()
+				local status = ply:Alive() and "10-8" or "10-7"
+				
+				-- Extract unit ID - look for the last part with format like "RL.938" or "MPF.01.234"
+				local unitID = name
+				-- Try to find pattern: letters followed by dot and numbers (e.g., RL.938, MPF.01.234)
+				local pattern = string.match(name, "([%u]+%.[%d]+)%s*$") or string.match(name, ":([%u]+%.[%d]+)")
+				if pattern then
+					unitID = pattern
+				else
+					-- Fallback: take last part after colon or space
+					local colonPos = string.find(name, ":", 1, true)
+					if colonPos then
+						unitID = string.sub(name, colonPos + 1)
+					else
+						local spacePos = string.find(name, " ")
+						if spacePos then
+							unitID = string.sub(name, spacePos + 1)
+						end
+					end
+				end
+				
+				table.insert(self.unitEntries, {
+					id = unitID,
+					status = status,
+					location = "N/A"
+				})
+			end
+		end
+	end
+	
+	-- Sort by unit ID
+	table.sort(self.unitEntries, function(a, b)
+		return a.id < b.id
+	end)
 end
 
 function PANEL:Think()
@@ -143,6 +274,87 @@ function PANEL:Think()
 		
 		if fadeProgress >= 1 then
 			self.buttonsFadingIn = false
+			self.infoBoxNextTime = CurTime() + 0.5
+		end
+	end
+	
+	-- Update info box scrolling text
+	if self.buttonsFadeAlpha >= 255 and CurTime() >= self.infoBoxNextTime then
+		local displayText = self.infoBoxTexts[self.infoBoxNextIndex]
+		
+		-- Add random numbers to certain messages
+		if string.find(displayText, "SCANNING FREQUENCY") then
+			displayText = "[BIOMETRICS] SCANNING FREQUENCY: " .. string.format("%.1f", math.random(20, 50) / 10) .. " GHz"
+		elseif string.find(displayText, "CAMERA ARRAY") then
+			displayText = "[SURVEILLANCE] CAMERA ARRAY: " .. math.random(800, 900) .. " FEEDS ACTIVE"
+		elseif string.find(displayText, "COMPLIANCE INDEX") then
+			displayText = "[CITIZEN] COMPLIANCE INDEX: " .. string.format("%.1f", math.random(920, 980) / 10) .. "%"
+		elseif string.find(displayText, "UPLINK LATENCY") then
+			displayText = "[NETWORK] UPLINK LATENCY: " .. math.random(8, 25) .. "ms"
+		elseif string.find(displayText, "CPU UTILIZATION") then
+			displayText = "[SYSTEM] CPU UTILIZATION: " .. math.random(45, 85) .. "%"
+		elseif string.find(displayText, "CACHE STATUS") then
+			displayText = "[MEMORY] CACHE STATUS: " .. string.format("%.1f", math.random(15, 65) / 10) .. "/8.0 GB"
+		elseif string.find(displayText, "TRACKING") then
+			displayText = "[BIOSIGNAL] TRACKING " .. math.random(1500, 2200) .. " ENTITIES"
+		elseif string.find(displayText, "ACTIVE UNITS") then
+			displayText = "[CIVIL PROTECTION] ACTIVE UNITS: " .. math.random(35, 50)
+		elseif string.find(displayText, "SCANS COMPLETED") then
+			displayText = "[CHECKPOINT] SCANS COMPLETED: " .. math.random(1000, 1500)
+		end
+		
+		table.insert(self.infoBoxDisplayed, {
+			text = displayText,
+			spawnTime = CurTime()
+		})
+		
+		self.infoBoxNextIndex = self.infoBoxNextIndex + 1
+		if self.infoBoxNextIndex > #self.infoBoxTexts then
+			self.infoBoxNextIndex = 1
+		end
+		
+		self.infoBoxNextTime = CurTime() + 0.1
+		
+		-- Remove old texts if too many
+		while #self.infoBoxDisplayed > self.infoBoxMaxLines do
+			table.remove(self.infoBoxDisplayed, 1)
+		end
+	end
+	
+	-- Handle panel fade transitions
+	if self.panelFading then
+		local fadeElapsed = CurTime() - self.panelFadeStart
+		local fadeProgress = math.min(fadeElapsed / 0.2, 1)
+		
+		if self.panelFadingOut then
+			-- Fading out
+			self.panelFadeAlpha = 255 * (1 - fadeProgress)
+			if fadeProgress >= 1 then
+				if self.nextPanel then
+					-- Transition to new panel
+					self.activePanel = self.nextPanel
+					-- Update unit entries if switching to Unit ID panel
+					if self.activePanel == "unitid" then
+						self:UpdateUnitEntries()
+					end
+					self.nextPanel = nil
+					self.panelFadingOut = false
+					self.panelFadeAlpha = 0
+					self.panelFadeStart = CurTime()
+				else
+					-- Close panel
+					self.activePanel = nil
+					self.panelFading = false
+					self.panelFadingOut = false
+					self.scrollPosition = 0
+				end
+			end
+		else
+			-- Fading in
+			self.panelFadeAlpha = 255 * fadeProgress
+			if fadeProgress >= 1 then
+				self.panelFading = false
+			end
 		end
 	end
 end
@@ -309,6 +521,47 @@ function PANEL:Paint(width, height)
 			surface.SetTextPos(btnX + buttonPadding, btnY + buttonPadding)
 			surface.DrawText(button.text)
 		end
+		
+		-- Info box below buttons
+		if #self.buttons > 0 then
+			local lastButton = self.buttons[#self.buttons]
+			local boxX = leftMargin
+			local boxY = lastButton.y + lastButton.h + buttonSpacing
+			local boxWidth = uniformWidth
+			local boxHeight = 180
+			
+			-- Box background
+			surface.SetDrawColor(10, 20, 30, 200 * (self.buttonsFadeAlpha / 255))
+			surface.DrawRect(boxX, boxY, boxWidth, boxHeight)
+			
+			-- Box outline
+			surface.SetDrawColor(100, 150, 200, self.buttonsFadeAlpha)
+			surface.DrawOutlinedRect(boxX, boxY, boxWidth, boxHeight, 1)
+			
+			-- Draw scrolling text inside box
+			surface.SetFont("CombineTerminalSmall")
+			local textStartY = boxY + 6
+			local lineHeight = 12
+			
+			for i, textData in ipairs(self.infoBoxDisplayed) do
+				local textAge = CurTime() - textData.spawnTime
+				local textY = textStartY + ((i - 1) * lineHeight)
+				
+				-- Calculate fade effect
+				local textAlpha = self.buttonsFadeAlpha
+				if textAge < 0.15 then
+					-- Fade in
+					textAlpha = (textAge / 0.15) * self.buttonsFadeAlpha
+				elseif i == 1 and #self.infoBoxDisplayed > self.infoBoxMaxLines - 1 then
+					-- Fade out top line when about to be removed
+					textAlpha = self.buttonsFadeAlpha * 0.5
+				end
+				
+				surface.SetTextColor(120, 220, 255, textAlpha)
+				surface.SetTextPos(boxX + 8, textY)
+				surface.DrawText(textData.text)
+			end
+		end
 	end
 	
 	-- Exit button at bottom (always visible)
@@ -346,6 +599,438 @@ function PANEL:Paint(width, height)
 	surface.SetTextColor(255, 255, 255, pulseAlpha)
 	surface.SetTextPos(exitX, exitY)
 	surface.DrawText(exitText)
+	
+	-- Draw active panel on the right side
+	if (self.activePanel == "lookout" or self.nextPanel == "lookout") and self.buttonsFadeAlpha >= 255 then
+		local firstButton = self.buttons[1]
+		local panelWidth = 350
+		local panelHeight = 300
+		local panelX = width - panelWidth - 50
+		local panelY = firstButton.y
+		
+		-- Panel background
+		surface.SetDrawColor(20, 40, 80, 220 * (self.panelFadeAlpha / 255))
+		surface.DrawRect(panelX, panelY, panelWidth, panelHeight)
+		
+		-- Panel outline
+		surface.SetDrawColor(100, 150, 200, self.panelFadeAlpha)
+		surface.DrawOutlinedRect(panelX, panelY, panelWidth, panelHeight, 2)
+		
+		-- Inner content area (lighter blue)
+		local contentPadding = 10
+		local scrollbarWidth = 20
+		local contentX = panelX + contentPadding
+		local contentY = panelY + contentPadding
+		local contentWidth = panelWidth - (contentPadding * 2) - scrollbarWidth - 5
+		local contentHeight = panelHeight - (contentPadding * 2)
+		
+		-- Inner background (lighter blue)
+		surface.SetDrawColor(30, 60, 100, 180 * (self.panelFadeAlpha / 255))
+		surface.DrawRect(contentX, contentY, contentWidth, contentHeight)
+		
+		-- Static horizontal scan lines from top to bottom
+		surface.SetDrawColor(255, 255, 255, 15 * (self.panelFadeAlpha / 255))
+		for y = contentY, contentY + contentHeight, 4 do
+			surface.DrawLine(contentX, y, contentX + contentWidth, y)
+		end
+		
+		-- Animated slow moving horizontal scanning line
+		local scanPos = ((CurTime() * 0.1) % 1) * contentHeight + contentY
+		surface.SetDrawColor(255, 255, 255, 120 * (self.panelFadeAlpha / 255))
+		surface.DrawLine(contentX, scanPos, contentX + contentWidth, scanPos)
+		
+		-- Column headers at the top
+		surface.SetFont("CombineTerminalText")
+		local headerY = contentY + 8
+		local col1X = contentX + 10
+		local col2X = contentX + contentWidth * 0.35
+		local col3X = contentX + contentWidth * 0.70
+		
+		surface.SetTextColor(200, 230, 255, self.panelFadeAlpha)
+		surface.SetTextPos(col1X, headerY)
+		surface.DrawText("BOL ID")
+		
+		surface.SetTextPos(col2X, headerY)
+		surface.DrawText("Reason")
+		
+		surface.SetTextPos(col3X, headerY)
+		surface.DrawText("Time")
+		
+		-- Horizontal line below headers
+		local headerLineY = headerY + 20
+		surface.SetDrawColor(100, 150, 200, 150 * (self.panelFadeAlpha / 255))
+		surface.DrawLine(contentX + 5, headerLineY, contentX + contentWidth - 5, headerLineY)
+		
+		-- Scrollable BOL entries
+		local entryStartY = headerLineY + 10
+		local entryHeight = 25
+		local totalContentHeight = #self.bolEntries * entryHeight
+		local maxScroll = math.max(0, totalContentHeight - (contentHeight - 40))
+		local scrollOffset = self.scrollPosition * maxScroll
+		
+		-- Enable scissor rect to clip content
+		render.SetScissorRect(contentX, entryStartY, contentX + contentWidth, contentY + contentHeight, true)
+		
+		surface.SetFont("CombineTerminalSmall")
+		for i, entry in ipairs(self.bolEntries) do
+			local entryY = entryStartY + ((i - 1) * entryHeight) - scrollOffset
+			
+			-- Only draw if visible
+			if entryY + entryHeight >= entryStartY and entryY <= contentY + contentHeight then
+				-- Alternating row background
+				if i % 2 == 0 then
+					surface.SetDrawColor(20, 40, 70, 100 * (self.panelFadeAlpha / 255))
+					surface.DrawRect(contentX + 5, entryY, contentWidth - 10, entryHeight)
+				end
+				
+				surface.SetTextColor(180, 210, 240, self.panelFadeAlpha)
+				surface.SetTextPos(col1X, entryY + 8)
+				surface.DrawText(entry.id)
+				
+				surface.SetTextPos(col2X, entryY + 8)
+				surface.DrawText(entry.reason)
+				
+				surface.SetTextPos(col3X, entryY + 8)
+				surface.DrawText(entry.time)
+			end
+		end
+		
+		-- Disable scissor rect
+		render.SetScissorRect(0, 0, 0, 0, false)
+		
+		-- Scrollbar on the right
+		local scrollbarX = panelX + panelWidth - scrollbarWidth - contentPadding
+		local scrollbarY = contentY
+		local scrollbarHeight = contentHeight
+		
+		-- Store scrollbar bounds for mouse detection
+		self.scrollbarX = scrollbarX
+		self.scrollbarY = scrollbarY
+		self.scrollbarWidth = scrollbarWidth
+		self.scrollbarHeight = scrollbarHeight
+		
+		-- Scrollbar background
+		surface.SetDrawColor(15, 30, 60, 200 * (self.panelFadeAlpha / 255))
+		surface.DrawRect(scrollbarX, scrollbarY, scrollbarWidth, scrollbarHeight)
+		
+		-- Scrollbar outline
+		surface.SetDrawColor(80, 120, 160, self.panelFadeAlpha)
+		surface.DrawOutlinedRect(scrollbarX, scrollbarY, scrollbarWidth, scrollbarHeight, 1)
+		
+		-- Scrollbar thumb (position based on scroll)
+		local thumbHeight = 60
+		local availableHeight = scrollbarHeight - thumbHeight
+		local thumbY = scrollbarY + (availableHeight * self.scrollPosition)
+		surface.SetDrawColor(60, 100, 140, self.panelFadeAlpha)
+		surface.DrawRect(scrollbarX + 2, thumbY, scrollbarWidth - 4, thumbHeight)
+	end
+	
+	-- Draw Unit ID Index panel
+	if (self.activePanel == "unitid" or self.nextPanel == "unitid") and self.buttonsFadeAlpha >= 255 then
+		local firstButton = self.buttons[1]
+		local panelWidth = 350
+		local panelHeight = 300
+		local panelX = width - panelWidth - 50
+		local panelY = firstButton.y
+		
+		-- Panel background
+		surface.SetDrawColor(20, 40, 80, 220 * (self.panelFadeAlpha / 255))
+		surface.DrawRect(panelX, panelY, panelWidth, panelHeight)
+		
+		-- Panel outline
+		surface.SetDrawColor(100, 150, 200, self.panelFadeAlpha)
+		surface.DrawOutlinedRect(panelX, panelY, panelWidth, panelHeight, 2)
+		
+		-- Inner content area (lighter blue)
+		local contentPadding = 10
+		local scrollbarWidth = 20
+		local contentX = panelX + contentPadding
+		local contentY = panelY + contentPadding
+		local contentWidth = panelWidth - (contentPadding * 2) - scrollbarWidth - 5
+		local contentHeight = panelHeight - (contentPadding * 2)
+		
+		-- Inner background (lighter blue)
+		surface.SetDrawColor(30, 60, 100, 180 * (self.panelFadeAlpha / 255))
+		surface.DrawRect(contentX, contentY, contentWidth, contentHeight)
+		
+		-- Static horizontal scan lines from top to bottom
+		surface.SetDrawColor(255, 255, 255, 15 * (self.panelFadeAlpha / 255))
+		for y = contentY, contentY + contentHeight, 4 do
+			surface.DrawLine(contentX, y, contentX + contentWidth, y)
+		end
+		
+		-- Animated slow moving horizontal scanning line
+		local scanPos = ((CurTime() * 0.1) % 1) * contentHeight + contentY
+		surface.SetDrawColor(255, 255, 255, 120 * (self.panelFadeAlpha / 255))
+		surface.DrawLine(contentX, scanPos, contentX + contentWidth, scanPos)
+		
+		-- Column headers at the top
+		surface.SetFont("CombineTerminalText")
+		local headerY = contentY + 8
+		local col1X = contentX + 10
+		local col2X = contentX + contentWidth * 0.35
+		local col3X = contentX + contentWidth * 0.70
+		
+		surface.SetTextColor(200, 230, 255, self.panelFadeAlpha)
+		surface.SetTextPos(col1X, headerY)
+		surface.DrawText("Unit ID")
+		
+		surface.SetTextPos(col2X, headerY)
+		surface.DrawText("Status")
+		
+		surface.SetTextPos(col3X, headerY)
+		surface.DrawText("Location")
+		
+		-- Horizontal line below headers
+		local headerLineY = headerY + 20
+		surface.SetDrawColor(100, 150, 200, 150 * (self.panelFadeAlpha / 255))
+		surface.DrawLine(contentX + 5, headerLineY, contentX + contentWidth - 5, headerLineY)
+		
+		-- Scrollable unit entries
+		local entryStartY = headerLineY + 10
+		local entryHeight = 25
+		local totalContentHeight = #self.unitEntries * entryHeight
+		local availableHeight = contentHeight - (entryStartY - contentY)
+		local maxScroll = math.max(0, totalContentHeight - availableHeight)
+		local scrollOffset = self.scrollPosition * maxScroll
+		
+		surface.SetFont("CombineTerminalText")
+		for i, entry in ipairs(self.unitEntries) do
+			local entryY = entryStartY + ((i - 1) * entryHeight) - scrollOffset
+			
+			-- Draw all entries
+			-- Alternating row background
+			if i % 2 == 0 then
+				surface.SetDrawColor(20, 40, 70, 100)
+				surface.DrawRect(contentX + 5, entryY, contentWidth - 10, entryHeight)
+			end
+			
+			-- Draw text with full opacity
+			surface.SetTextColor(180, 210, 240, 255)
+			surface.SetTextPos(col1X, entryY + 8)
+			surface.DrawText(entry.id)
+			
+			surface.SetTextPos(col2X, entryY + 8)
+			surface.DrawText(entry.status)
+			
+			surface.SetTextPos(col3X, entryY + 8)
+			surface.DrawText(entry.location)
+		end
+		
+		-- Disable scissor rect
+		render.SetScissorRect(0, 0, 0, 0, false)
+		
+		-- Scrollbar on the right
+		local scrollbarX = panelX + panelWidth - scrollbarWidth - contentPadding
+		local scrollbarY = contentY
+		local scrollbarHeight = contentHeight
+		
+		-- Store scrollbar bounds for mouse detection
+		self.scrollbarX = scrollbarX
+		self.scrollbarY = scrollbarY
+		self.scrollbarWidth = scrollbarWidth
+		self.scrollbarHeight = scrollbarHeight
+		
+		-- Scrollbar background
+		surface.SetDrawColor(15, 30, 60, 200 * (self.panelFadeAlpha / 255))
+		surface.DrawRect(scrollbarX, scrollbarY, scrollbarWidth, scrollbarHeight)
+		
+		-- Scrollbar outline
+		surface.SetDrawColor(80, 120, 160, self.panelFadeAlpha)
+		surface.DrawOutlinedRect(scrollbarX, scrollbarY, scrollbarWidth, scrollbarHeight, 1)
+		
+		-- Scrollbar thumb (position based on scroll)
+		local thumbHeight = 60
+		local availableHeight = scrollbarHeight - thumbHeight
+		local thumbY = scrollbarY + (availableHeight * self.scrollPosition)
+		surface.SetDrawColor(60, 100, 140, self.panelFadeAlpha)
+		surface.DrawRect(scrollbarX + 2, thumbY, scrollbarWidth - 4, thumbHeight)
+	end
+	
+	-- Draw Sociostatus Index panel
+	if (self.activePanel == "sociostatus" or self.nextPanel == "sociostatus") and self.buttonsFadeAlpha >= 255 then
+		local firstButton = self.buttons[1]
+		local panelWidth = 350
+		local panelHeight = 300
+		local panelX = width - panelWidth - 50
+		local panelY = firstButton.y
+		
+		-- Panel background
+		surface.SetDrawColor(20, 40, 80, 220 * (self.panelFadeAlpha / 255))
+		surface.DrawRect(panelX, panelY, panelWidth, panelHeight)
+		
+		-- Panel outline
+		surface.SetDrawColor(100, 150, 200, self.panelFadeAlpha)
+		surface.DrawOutlinedRect(panelX, panelY, panelWidth, panelHeight, 2)
+		
+		-- Inner content area
+		local contentPadding = 10
+		local contentX = panelX + contentPadding
+		local contentY = panelY + contentPadding
+		local contentWidth = panelWidth - (contentPadding * 2)
+		local contentHeight = panelHeight - (contentPadding * 2)
+		
+		-- Inner background
+		surface.SetDrawColor(30, 60, 100, 180 * (self.panelFadeAlpha / 255))
+		surface.DrawRect(contentX, contentY, contentWidth, contentHeight)
+		
+		-- Static horizontal scan lines
+		surface.SetDrawColor(255, 255, 255, 15 * (self.panelFadeAlpha / 255))
+		for y = contentY, contentY + contentHeight, 4 do
+			surface.DrawLine(contentX, y, contentX + contentWidth, y)
+		end
+		
+		-- Animated scanning line
+		local scanPos = ((CurTime() * 0.1) % 1) * contentHeight + contentY
+		surface.SetDrawColor(255, 255, 255, 120 * (self.panelFadeAlpha / 255))
+		surface.DrawLine(contentX, scanPos, contentX + contentWidth, scanPos)
+		
+		-- Status information texts
+		surface.SetFont("CombineTerminalText")
+		
+		-- Check ration cycle (looking for ix_rationdispenser entities that are active)
+		local rationCycleActive = false
+		for _, ent in ipairs(ents.FindByClass("ix_rationdispenser")) do
+			if IsValid(ent) and ent:GetEnabled() then
+				rationCycleActive = true
+				break
+			end
+		end
+		
+		-- Check curfew (you can add your own curfew system check here)
+		local currentHour = tonumber(os.date("%H"))
+		local curfewActive = (currentHour >= 22 or currentHour < 6)
+		
+		-- Count citizens with CID
+		local citizenCount = 0
+		for _, ply in ipairs(player.GetAll()) do
+			local char = ply:GetCharacter()
+			if char then
+				local inv = char:GetInventory()
+				if inv then
+					for _, item in pairs(inv:GetItems()) do
+						if item.uniqueID == "cid" then
+							citizenCount = citizenCount + 1
+							break
+						end
+					end
+				end
+			end
+		end
+		
+		-- Calculate Sociostability Index (CP alive vs total CP)
+		local totalCP = 0
+		local aliveCP = 0
+		for _, ply in ipairs(player.GetAll()) do
+			local char = ply:GetCharacter()
+			if char then
+				local factionID = char:GetFaction()
+				if factionID == FACTION_MPF then
+					totalCP = totalCP + 1
+					if ply:Alive() then
+						aliveCP = aliveCP + 1
+					end
+				end
+			end
+		end
+		local sociostabilityIndex = totalCP > 0 and math.floor((aliveCP / totalCP) * 100) or 100
+		
+		-- Calculate Compliance Rating based on city code
+		local complianceRating = 100
+		local cityCode = ix.option.Get("cityCode", "SS") -- Default to Socio-Stable
+		if cityCode == "SS" then
+			complianceRating = 100
+		elseif cityCode == "M" then
+			complianceRating = 60
+		elseif cityCode == "JW" then
+			complianceRating = 25
+		elseif cityCode == "AJ" then
+			complianceRating = 0
+		end
+		
+		-- Blinking text for scanning
+		local blinkAlpha = math.abs(math.sin(CurTime() * 3)) * self.panelFadeAlpha
+		
+		-- Bottom left status texts
+		local bottomY = contentY + contentHeight - 60
+		
+		surface.SetTextColor(200, 230, 255, self.panelFadeAlpha)
+		surface.SetTextPos(contentX + 10, bottomY)
+		surface.DrawText("RATION CYCLE: " .. (rationCycleActive and "ACTIVE" or "INACTIVE"))
+		
+		surface.SetTextPos(contentX + 10, bottomY + 20)
+		surface.DrawText("CURFEW STATUS: " .. (curfewActive and "ACTIVE" or "INACTIVE"))
+		
+		surface.SetTextPos(contentX + 10, bottomY + 40)
+		surface.DrawText("CURRENT CITIZEN INDEX: " .. citizenCount)
+		
+		-- Additional status texts scattered around
+		surface.SetTextPos(contentX + 10, contentY + 20)
+		surface.DrawText("CIVIL PROTECTION AUTHORITY")
+		
+		surface.SetTextPos(contentX + 10, contentY + 50)
+		surface.DrawText("SOCIOSTABILITY INDEX: " .. sociostabilityIndex .. "%")
+		
+		surface.SetTextPos(contentX + 10, contentY + 80)
+		surface.DrawText("COMPLIANCE RATING: " .. complianceRating .. "%")
+		
+		surface.SetTextPos(contentX + 10, contentY + 110)
+		surface.DrawText("LOYALIST QUOTA: 0")
+		
+		surface.SetTextColor(255, 200, 100, blinkAlpha)
+		surface.SetTextPos(contentX + 10, contentY + 140)
+		surface.DrawText("ANTI-CITIZEN COUNT: SCANNING")
+	end
+	
+	-- Draw Surveillance System panel
+	if (self.activePanel == "surveillance" or self.nextPanel == "surveillance") and self.buttonsFadeAlpha >= 255 then
+		local firstButton = self.buttons[1]
+		local panelWidth = 350
+		local panelHeight = 300
+		local panelX = width - panelWidth - 50
+		local panelY = firstButton.y
+		
+		-- Panel background
+		surface.SetDrawColor(20, 40, 80, 220 * (self.panelFadeAlpha / 255))
+		surface.DrawRect(panelX, panelY, panelWidth, panelHeight)
+		
+		-- Panel outline
+		surface.SetDrawColor(100, 150, 200, self.panelFadeAlpha)
+		surface.DrawOutlinedRect(panelX, panelY, panelWidth, panelHeight, 2)
+		
+		-- Inner content area
+		local contentPadding = 10
+		local contentX = panelX + contentPadding
+		local contentY = panelY + contentPadding
+		local contentWidth = panelWidth - (contentPadding * 2)
+		local contentHeight = panelHeight - (contentPadding * 2)
+		
+		-- Inner background
+		surface.SetDrawColor(30, 60, 100, 180 * (self.panelFadeAlpha / 255))
+		surface.DrawRect(contentX, contentY, contentWidth, contentHeight)
+		
+		-- Static horizontal scan lines
+		surface.SetDrawColor(255, 255, 255, 15 * (self.panelFadeAlpha / 255))
+		for y = contentY, contentY + contentHeight, 4 do
+			surface.DrawLine(contentX, y, contentX + contentWidth, y)
+		end
+		
+		-- Animated scanning line
+		local scanPos = ((CurTime() * 0.1) % 1) * contentHeight + contentY
+		surface.SetDrawColor(255, 255, 255, 120 * (self.panelFadeAlpha / 255))
+		surface.DrawLine(contentX, scanPos, contentX + contentWidth, scanPos)
+		
+		-- Coming Soon text centered
+		surface.SetFont("CombineTerminalTitle")
+		local text = "Coming Soon :)"
+		local textW, textH = surface.GetTextSize(text)
+		local textX = contentX + (contentWidth - textW) / 2
+		local textY = contentY + (contentHeight - textH) / 2
+		
+		surface.SetTextColor(200, 230, 255, self.panelFadeAlpha)
+		surface.SetTextPos(textX, textY)
+		surface.DrawText(text)
+	end
 end
 
 function PANEL:OnKeyCodePressed(key)
@@ -360,7 +1045,55 @@ function PANEL:OnMousePressed(mouseCode)
 	if mouseCode == MOUSE_LEFT and not self.isClosing then
 		local x, y = self:CursorPos()
 		
-		-- Check if click is within button bounds
+		-- Check if clicking on scrollbar (if any panel with scrollbar is active)
+		if (self.activePanel == "lookout" or self.activePanel == "unitid") and self.scrollbarX then
+			if x >= self.scrollbarX and x <= self.scrollbarX + self.scrollbarWidth and
+			   y >= self.scrollbarY and y <= self.scrollbarY + self.scrollbarHeight then
+				self.isDraggingScrollbar = true
+				return
+			end
+		end
+		
+		-- Check main buttons
+		for i, button in ipairs(self.buttons) do
+			if x >= button.x and x <= button.x + button.w and
+			   y >= button.y and y <= button.y + button.h then
+				surface.PlaySound("hl2rp/terminal-click.wav")
+				
+				-- Handle button specific actions
+				if self.activePanel == button.id then
+					-- Same button clicked, close panel
+					self.nextPanel = nil
+					self.panelFading = true
+					self.panelFadingOut = true
+					self.panelFadeStart = CurTime()
+				elseif self.activePanel then
+					-- Different panel active, transition to new one
+					self.nextPanel = button.id
+					self.scrollPosition = 0  -- Reset scroll for new panel
+					self.panelFading = true
+					self.panelFadingOut = true
+					self.panelFadeStart = CurTime()
+				else
+					-- No panel active, open new one
+					self.activePanel = button.id
+					-- Update unit entries if opening Unit ID panel
+					if button.id == "unitid" then
+						self:UpdateUnitEntries()
+					end
+					self.nextPanel = nil
+					self.scrollPosition = 0  -- Reset scroll for new panel
+					self.panelFadeAlpha = 0
+					self.panelFading = true
+					self.panelFadingOut = false
+					self.panelFadeStart = CurTime()
+				end
+				
+				return
+			end
+		end
+		
+		-- Check exit button
 		if x >= self.buttonX and x <= self.buttonX + self.buttonWidth and
 		   y >= self.buttonY and y <= self.buttonY + self.buttonHeight then
 			self.isClosing = true
@@ -370,7 +1103,25 @@ function PANEL:OnMousePressed(mouseCode)
 	end
 end
 
+function PANEL:OnMouseReleased(mouseCode)
+	if mouseCode == MOUSE_LEFT then
+		self.isDraggingScrollbar = false
+	end
+end
+
 function PANEL:OnCursorMoved(x, y)
+	-- Handle scrollbar dragging
+	if self.isDraggingScrollbar and self.scrollbarY and self.scrollbarHeight then
+		local thumbHeight = 60
+		local availableHeight = self.scrollbarHeight - thumbHeight
+		local relativeY = y - self.scrollbarY
+		
+		-- Clamp position
+		relativeY = math.Clamp(relativeY - thumbHeight / 2, 0, availableHeight)
+		self.scrollPosition = relativeY / availableHeight
+		return
+	end
+	
 	local isOverAnyButton = false
 	
 	-- Check main buttons

@@ -24,7 +24,19 @@ function ENT:Initialize()
 	end
 	
 	-- Start looping hum sound
-	self:EmitSound("hl2rp/terminal-hum.wav", 60, 100, 0.3, CHAN_STATIC)
+	self.nextSoundTime = 0
+end
+
+function ENT:Think()
+	-- Keep hum sound playing in loop
+	if CurTime() >= self.nextSoundTime then
+		self:EmitSound("hl2rp/terminal-hum.wav", 60, 100, 0.3, CHAN_STATIC)
+		-- Restart sound every 10 seconds (adjust based on your sound file length)
+		self.nextSoundTime = CurTime() + 10
+	end
+	
+	self:NextThink(CurTime() + 1)
+	return true
 end
 
 function ENT:Use(activator, caller)
