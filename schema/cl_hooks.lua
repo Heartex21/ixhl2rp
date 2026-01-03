@@ -1142,8 +1142,8 @@ if (CLIENT) then
 end
 
 -- Draw custom logo in bottom right corner
-local logoMaterial = Material("custom/PJOLogo")
 function Schema:HUDPaint()
+	local logoMaterial = Material("custom/PJOLogo")
 	local scrW, scrH = ScrW(), ScrH()
 	local logoSize = 128 -- Adjust size as needed
 	local marginX = 200 -- Distance from right edge
